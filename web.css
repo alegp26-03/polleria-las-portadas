@@ -971,9 +971,11 @@ a {
     .info-card {
         min-height: auto;
     }
-
+    
     .info-hours__grid {
         grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        grid-auto-flow: row;
     }
 }
 
