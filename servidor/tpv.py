@@ -43,6 +43,7 @@ app = Flask(__name__)
 CSV_PROD = os.path.join(BASE_DIR, 'productos.csv')
 CSV_VENTAS = os.path.join(BASE_DIR, 'ventas.csv')
 CSV_PEDIDOS = os.path.join(BASE_DIR, 'pedidos_pendientes.csv')
+CSV_CIERRES = os.path.join(BASE_DIR, 'cierres.csv')
 BACKUP_DIR = os.path.join(BASE_DIR, 'backups')
 MAX_BACKUPS_ROTATIVOS = 3
 
@@ -342,6 +343,30 @@ def leer_ventas_hoy():
         logger.error(f"ERROR leyendo ventas: {e}")
     return ventas
 
+@app.route('/api/cierre', methods=['POST'])
+def api_guardar_cierre():
+    try:
+        data = request.json
+        es_nuevo = not os.path.exists(CSV_CIERRES) or os.path.getsize(CSV_CIERRES) == 0
+        with open(CSV_CIERRES, 'a', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            if es_nuevo:
+                writer.writerow(['timestamp', 'fondo_inicial', 'ventas_efectivo', 'ventas_tarjeta', 'teorico_efectivo', 'real_efectivo', 'descuadre', 'desglose_json'])
+            
+            writer.writerow([
+                datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                data.get('fondo_inicial', '0'),
+                data.get('ventas_efectivo', '0'),
+                data.get('ventas_tarjeta', '0'),
+                data.get('teorico_efectivo', '0'),
+                data.get('real_efectivo', '0'),
+                data.get('descuadre', '0'),
+                json.dumps(data.get('desglose', {}))
+            ])
+        return jsonify({'ok': True}), 200
+    except Exception as e:
+        logger.error(f"ERROR en POST /api/cierre: {e}")
+        return jsonify({'error': 'Error guardando cierre'}), 500
 
 # =============================================================================
 #  PEDIDOS PENDIENTES (TELEFONO) - NUEVO en v3
@@ -663,6 +688,22 @@ def api_get_pedidos():
         logger.error(traceback.format_exc())
         return jsonify({'error': 'Error interno del servidor'}), 500
 
+@app.route('/api/clientes', methods=['GET'])
+def api_get_clientes():
+    """Devuelve un diccionario de telefono -> nombre_cliente basado en todo el historial."""
+    try:
+        pedidos = leer_pedidos() # Lee todos, incluso los ya cobrados
+        clientes = {}
+        for p in pedidos:
+            tel = str(p.get('telefono', '')).strip()
+            nom = str(p.get('nombre_cliente', '')).strip()
+            # Guardamos el más reciente (el último sobreescribe si ha cambiado de nombre)
+            if tel and tel.lower() != 'sin teléfono' and nom:
+                clientes[tel] = nom
+        return jsonify(clientes)
+    except Exception as e:
+        logger.error(f"ERROR en GET /api/clientes: {e}")
+        return jsonify({'error': 'Error interno'}), 500
 
 @app.route('/api/pedidos/buscar', methods=['GET'])
 def api_buscar_pedidos():

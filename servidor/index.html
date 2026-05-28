@@ -282,6 +282,24 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;-webkit-tap-h
 #edit-base-price { cursor: pointer; background: #eff6ff; color: #2563eb; padding: 10px 16px; border-radius: 10px; display: inline-block; margin: 0 auto 16px; font-weight: 800; border: 2px dashed #93c5fd; transition: 0.15s; }
 #edit-base-price:active { transform: scale(0.95); background: #dbeafe; }
 
+/* == CIERRE MODAL == */
+.cierre-modal .modal { width: 96vw; height: 96vh; max-width: none; padding: 30px; display: flex; flex-direction: column; }
+.cierre-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; flex: 1; overflow-y: auto; }
+.cierre-panel { background: #f8fafc; padding: 25px; border-radius: 16px; border: 2px solid #e2e8f0; display: flex; flex-direction: column; }
+.cierre-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; font-size: 22px; font-weight: 700; color: #475569; }
+.cierre-row .input-wrapper { display: flex; align-items: center; gap: 8px; }
+.cierre-row .btn-step { width: 55px; height: 60px; font-size: 36px; font-weight: bold; background: #e2e8f0; color: #334155; border-radius: 12px; transition: 0.1s; display: flex; justify-content: center; align-items: center; line-height: 0; padding-bottom: 4px; }
+.cierre-row .btn-step:active { background: #cbd5e1; transform: scale(0.92); }
+.cierre-row input { width: 100px; height: 60px; text-align: center; font-size: 28px; font-weight: 900; border: 3px solid #cbd5e1; border-radius: 12px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); -moz-appearance: textfield; }
+.cierre-row input::-webkit-outer-spin-button, .cierre-row input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.cierre-row input:focus { border-color: #3b82f6; outline: none; background: #eff6ff; }
+.cierre-totales { margin-top: auto; padding-top: 20px; border-top: 3px dashed #cbd5e1; }
+.cierre-totales .c-total { font-size: 26px; font-weight: 800; color: #1e293b; display: flex; justify-content: space-between; margin-bottom: 15px;}
+.cierre-descuadre { font-size: 32px; font-weight: 900; text-align: center; padding: 20px; border-radius: 14px; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+.cierre-descuadre.ok { background: #dcfce7; color: #16a34a; border: 2px solid #bbf7d0; }
+.cierre-descuadre.bad { background: #fef2f2; color: #ef4444; border: 2px solid #fecaca; }
+.cierre-tarjeta-box { background: #eff6ff; border: 3px solid #bfdbfe; padding: 20px; border-radius: 14px; margin-top: 25px; }
+
 /* == PRINT STYLES == */
 @media print{
   @page{margin:0;size:80mm auto}
@@ -300,6 +318,7 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;-webkit-tap-h
     <button onclick="openPedidosModal()">📞 Pedidos</button>
     <button onclick="openVentas()">📊 Ventas</button>
     <button onclick="openStats()">📈 Estadísticas</button>
+    <button onclick="openCierre()">🔒 Cierre de Caja</button>
     <button onclick="openAdmin()">⚙️ Gestión</button>
   </div>
   <div id="left">
@@ -505,7 +524,7 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;-webkit-tap-h
     </div>
     <div class="form-espera-field">
       <label>Teléfono (Opcional)</label>
-      <input id="input-espera-tel" readonly placeholder="Toca para abrir teclado numérico" onclick="openNumpad('Teléfono del cliente', function(v){ document.getElementById('input-espera-tel').value=v }, true)">
+      <input id="input-espera-tel" readonly placeholder="Toca para abrir teclado numérico" onclick="abrirNumpadTelefono()">
     </div>
     <div class="form-espera-field">
       <label>Hora de Recogida (Opcional)</label>
@@ -564,6 +583,60 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;-webkit-tap-h
 
     <div class="pedidos-list" style="flex:1; margin-top:0;" id="stats-list"></div>
     <button class="btn-admin-close" onclick="closeStats()">Cerrar</button>
+  </div>
+</div>
+
+<div class="modal-overlay cierre-modal" id="cierre-overlay">
+  <div class="modal">
+    <div class="admin-title">🔒 Arqueo y Cierre de Caja</div>
+    
+    <div class="cierre-grid">
+      <div class="cierre-panel">
+        <h3 style="margin-bottom: 15px; color:#1e293b;">Billetes y Monedas en Cajón</h3>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+          <div>
+            <div class="cierre-row">50 € <div class="input-wrapper"><span style="margin-right:10px;">x</span> <button class="btn-step" onclick="stepCierre('50', -1)">−</button><input type="number" id="c-50" value="0" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('50', 1)">+</button></div></div>
+            <div class="cierre-row">20 € <div class="input-wrapper"><span style="margin-right:10px;">x</span> <button class="btn-step" onclick="stepCierre('20', -1)">−</button><input type="number" id="c-20" value="0" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('20', 1)">+</button></div></div>
+            <div class="cierre-row">10 € <div class="input-wrapper"><span style="margin-right:10px;">x</span> <button class="btn-step" onclick="stepCierre('10', -1)">−</button><input type="number" id="c-10" value="0" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('10', 1)">+</button></div></div>
+            <div class="cierre-row">5 € <div class="input-wrapper"><span style="margin-right:10px;">x</span> <button class="btn-step" onclick="stepCierre('5', -1)">−</button><input type="number" id="c-5" value="0" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('5', 1)">+</button></div></div>
+            <div class="cierre-row">2 € <div class="input-wrapper"><span style="margin-right:10px;">x</span> <button class="btn-step" onclick="stepCierre('2', -1)">−</button><input type="number" id="c-2" value="0" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('2', 1)">+</button></div></div>
+            <div class="cierre-row">1 € <div class="input-wrapper"><span style="margin-right:10px;">x</span> <button class="btn-step" onclick="stepCierre('1', -1)">−</button><input type="number" id="c-1" value="0" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('1', 1)">+</button></div></div>
+          </div>
+          <div>
+            <div class="cierre-row">0.50 € <div class="input-wrapper"><span style="margin-right:10px;">x</span> <button class="btn-step" onclick="stepCierre('050', -1)">−</button><input type="number" id="c-050" value="0" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('050', 1)">+</button></div></div>
+            <div class="cierre-row">0.20 € <div class="input-wrapper"><span style="margin-right:10px;">x</span> <button class="btn-step" onclick="stepCierre('020', -1)">−</button><input type="number" id="c-020" value="0" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('020', 1)">+</button></div></div>
+            <div class="cierre-row">0.10 € <div class="input-wrapper"><span style="margin-right:10px;">x</span> <button class="btn-step" onclick="stepCierre('010', -1)">−</button><input type="number" id="c-010" value="0" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('010', 1)">+</button></div></div>
+            <div class="cierre-row">0.05 € <div class="input-wrapper"><span style="margin-right:10px;">x</span> <button class="btn-step" onclick="stepCierre('005', -1)">−</button><input type="number" id="c-005" value="0" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('005', 1)">+</button></div></div>
+            <div class="cierre-row">0.02 € <div class="input-wrapper"><span style="margin-right:10px;">x</span> <button class="btn-step" onclick="stepCierre('002', -1)">−</button><input type="number" id="c-002" value="0" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('002', 1)">+</button></div></div>
+            <div class="cierre-row">0.01 € <div class="input-wrapper"><span style="margin-right:10px;">x</span> <button class="btn-step" onclick="stepCierre('001', -1)">−</button><input type="number" id="c-001" value="0" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('001', 1)">+</button></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cierre-panel">
+        <div class="cierre-row" style="color:#000;">Fondo Inicial en Caja: 
+          <div class="input-wrapper"><input type="number" id="c-fondo" value="50" step="0.01" onclick="this.select()" oninput="calcCierre()" style="width:140px;"> <span style="margin-left:5px;">€</span></div>
+        </div>
+        <div class="cierre-row" style="color:#16a34a;">+ Ventas en Efectivo: <span id="c-ventas-ef">0.00 €</span></div>
+        
+        <div class="cierre-totales">
+          <div class="c-total">Teórico en Caja: <span id="c-teorico">0.00 €</span></div>
+          <div class="c-total" style="color:#2563eb;">Total Contado (Real): <span id="c-real">0.00 €</span></div>
+        </div>
+        
+        <div class="cierre-descuadre ok" id="c-descuadre">Descuadre: 0.00 €</div>
+
+        <div class="cierre-tarjeta-box">
+          <div class="c-total" style="font-size:22px;">💳 Pagos con Tarjeta: <span id="c-ventas-tj">0.00 €</span></div>
+          <div class="c-total" style="font-size:22px; margin-top:12px;">💰 TOTAL FACTURADO: <span id="c-ventas-total">0.00 €</span></div>
+        </div>
+
+        <div style="display:flex; gap:15px; margin-top:25px;">
+          <button class="btn-admin-close" style="margin:0; flex:1; font-size:20px; padding:18px;" onclick="closeCierre()">Cancelar</button>
+          <button class="btn-edit-save" style="margin:0; flex:1; font-size:20px; padding:18px;" onclick="guardarCierre()">Guardar Cierre</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1266,6 +1339,24 @@ async function eliminarPedido(id) {
   if(currentPedidoId === id) clearOrder();
 }
 
+/* === AGENDA INTELIGENTE === */
+let clientesCache = {};
+
+function abrirNumpadTelefono() {
+  openNumpad('Teléfono del cliente', function(v) {
+    document.getElementById('input-espera-tel').value = v;
+    
+    // Magia: Si el teléfono existe en caché y la casilla de nombre está vacía...
+    if (v && clientesCache[v]) {
+      const inputNombre = document.getElementById('input-espera-nombre');
+      if (!inputNombre.value.trim()) {
+        inputNombre.value = clientesCache[v];
+        toast("👤 Cliente habitual: " + clientesCache[v]);
+      }
+    }
+  }, true);
+}
+
 function abrirModalEspera() {
   if (currentPedidoId) {
     document.getElementById("titulo-espera").textContent = "Actualizar Pedido #" + currentPedidoId;
@@ -1275,6 +1366,12 @@ function abrirModalEspera() {
     document.getElementById("input-espera-tel").value = "";
     document.getElementById("input-espera-hora").value = "";
   }
+  
+  // Descarga la agenda de clientes en segundo plano para tenerla ultra rápida
+  fetch("/api/clientes").then(r => r.json()).then(data => {
+    if(!data.error) clientesCache = data;
+  }).catch(e => console.error("Error agenda", e));
+
   document.getElementById("form-espera-overlay").classList.add("open");
 }
 
@@ -1494,47 +1591,154 @@ async function runStats() {
   });
 
   if(Object.keys(data).length === 0) {
-    document.getElementById("stats-list").innerHTML = '<div style="text-align:center; padding:20px; color:#64748b;">No hay registros de ventas para estas fechas.</div>';
+    document.getElementById("stats-list").innerHTML = '<div style="text-align:center; padding:20px; color:#64748b; font-weight:bold; font-size:18px;">No hay registros de ventas para estas fechas.</div>';
     return;
   }
 
-  let html = '<table><tr>';
-  if(agrupar === 'cat') html += '<th>Categoría</th>';
-  else if(agrupar === 'prod') html += '<th>Plato</th>';
-  else html += '<th>Categoría / Plato</th>';
+  // Nueva paleta de alto contraste
+  let html = '<table style="width:100%; border-collapse: collapse;"><tr>';
+  if(agrupar === 'cat') html += '<th style="padding:12px; background:#1e293b; color:#fff; text-align:left;">Categoría</th>';
+  else if(agrupar === 'prod') html += '<th style="padding:12px; background:#1e293b; color:#fff; text-align:left;">Plato</th>';
+  else html += '<th style="padding:12px; background:#1e293b; color:#fff; text-align:left;">Categoría / Plato</th>';
   
-  if(showQty) html += '<th style="text-align:right;">Unidades Vendidas</th>';
-  if(showRev) html += '<th style="text-align:right;">Facturado (€)</th>';
+  if(showQty) html += '<th style="padding:12px; background:#1e293b; color:#fff; text-align:right;">Unidades Vendidas</th>';
+  if(showRev) html += '<th style="padding:12px; background:#1e293b; color:#fff; text-align:right;">Facturado (€)</th>';
   html += '</tr>';
 
   const keys = Object.keys(data).sort();
   keys.forEach(k => {
-    html += `<tr style="background:#f8fafc; font-weight:bold; font-size:16px;">
-      <td>${esc(k)}</td>
-      ${showQty ? `<td style="text-align:right;">${data[k].qty}</td>` : ''}
-      ${showRev ? `<td style="text-align:right; color:#16a34a;">${data[k].rev.toFixed(2)} €</td>` : ''}
+    // FILA DE CATEGORÍA: Fondo gris sólido, texto muy oscuro y euros en verde oscuro legible
+    html += `<tr style="background:#e2e8f0; border-bottom: 2px solid #cbd5e1;">
+      <td style="padding:12px; font-weight:900; font-size:17px; color:#0f172a;">${esc(k)}</td>
+      ${showQty ? `<td style="padding:12px; text-align:right; font-weight:bold; color:#0f172a;">${data[k].qty}</td>` : ''}
+      ${showRev ? `<td style="padding:12px; text-align:right; font-weight:900; color:#15803d;">${data[k].rev.toFixed(2)} €</td>` : ''}
     </tr>`;
 
     if (agrupar === 'cat_prod') {
-      // Ordenamos los platos dentro de la categoría del más vendido al menos vendido
       const subs = Object.keys(data[k].subs).sort((a,b) => data[k].subs[b].qty - data[k].subs[a].qty); 
       subs.forEach(subK => {
-         html += `<tr>
-          <td style="padding-left:30px; color:#475569;">↳ ${esc(subK)}</td>
-          ${showQty ? `<td style="text-align:right; color:#475569;">${data[k].subs[subK].qty}</td>` : ''}
-          ${showRev ? `<td style="text-align:right; color:#475569;">${data[k].subs[subK].rev.toFixed(2)} €</td>` : ''}
+         // FILA DE PLATO: Fondo blanco puro, sin flechas, sangría de 25px para jerarquía visual
+         html += `<tr style="border-bottom: 1px solid #e2e8f0; background:#fff;">
+          <td style="padding:10px 10px 10px 25px; font-size:16px; color:#334155; font-weight:600;">${esc(subK)}</td>
+          ${showQty ? `<td style="padding:10px; text-align:right; color:#334155; font-weight:600;">${data[k].subs[subK].qty}</td>` : ''}
+          ${showRev ? `<td style="padding:10px; text-align:right; color:#334155; font-weight:600;">${data[k].subs[subK].rev.toFixed(2)} €</td>` : ''}
         </tr>`;
       });
     }
   });
 
-  html += `<tr style="background:#1e293b; color:#fff; font-weight:bold; font-size:18px;">
-      <td>TOTALES FILTRADOS</td>
-      ${showQty ? `<td style="text-align:right;">${totalGlobalQty}</td>` : ''}
-      ${showRev ? `<td style="text-align:right; color:#4ade80;">${totalGlobalRev.toFixed(2)} €</td>` : ''}
+  // FILA DE TOTALES: Fondo casi negro para anclar visualmente la tabla
+  html += `<tr style="background:#0f172a; color:#fff;">
+      <td style="padding:16px 12px; font-weight:900; font-size:18px;">TOTALES FILTRADOS</td>
+      ${showQty ? `<td style="padding:16px 12px; text-align:right; font-weight:900; font-size:18px;">${totalGlobalQty}</td>` : ''}
+      ${showRev ? `<td style="padding:16px 12px; text-align:right; font-weight:900; font-size:18px; color:#4ade80;">${totalGlobalRev.toFixed(2)} €</td>` : ''}
     </tr></table>`;
 
   document.getElementById("stats-list").innerHTML = html;
+} 
+
+/* === ARQUEO Y CIERRE DE CAJA === */
+let cierreStats = { ef:0, tj:0, total:0 };
+
+async function openCierre() {
+  // Obtenemos las ventas del día en tiempo real
+  const r = await fetch("/api/ventas"); 
+  const ventas = await r.json();
+  
+  cierreStats.total = ventas.reduce((s,v) => s + parseFloat(v.total), 0);
+  cierreStats.ef = ventas.reduce((s,v) => s + (parseFloat(v.pagado_efectivo||0) - parseFloat(v.cambio||0)), 0);
+  cierreStats.tj = ventas.reduce((s,v) => s + parseFloat(v.pagado_tarjeta||0), 0);
+  
+  document.getElementById("c-ventas-ef").textContent = cierreStats.ef.toFixed(2) + " €";
+  document.getElementById("c-ventas-tj").textContent = cierreStats.tj.toFixed(2) + " €";
+  document.getElementById("c-ventas-total").textContent = cierreStats.total.toFixed(2) + " €";
+  
+  // Limpiamos la calculadora a 0
+  const inputs = ['50','20','10','5','2','1','050','020','010','005','002','001'];
+  inputs.forEach(id => document.getElementById("c-"+id).value = "0");
+  
+  document.getElementById("cierre-overlay").classList.add("open");
+  calcCierre(); // Hacemos el primer cálculo inicial
+}
+
+function closeCierre() { document.getElementById("cierre-overlay").classList.remove("open"); }
+
+function calcCierre() {
+  const fondo = parseFloat(document.getElementById("c-fondo").value) || 0;
+  
+  // Teórico: Lo que debe haber en la caja física
+  const teorico = fondo + cierreStats.ef;
+  document.getElementById("c-teorico").textContent = teorico.toFixed(2) + " €";
+  
+  const v = (id) => parseInt(document.getElementById("c-"+id).value) || 0;
+  
+  // Real: Multiplicar los billetes por su valor
+  const real = 
+    v('50')*50 + v('20')*20 + v('10')*10 + v('5')*5 + 
+    v('2')*2 + v('1')*1 + 
+    v('050')*0.50 + v('020')*0.20 + v('010')*0.10 + 
+    v('005')*0.05 + v('002')*0.02 + v('001')*0.01;
+    
+  document.getElementById("c-real").textContent = real.toFixed(2) + " €";
+  
+  // Cálculo final
+  const descuadre = real - teorico;
+  const descEl = document.getElementById("c-descuadre");
+  
+  if (Math.abs(descuadre) < 0.01) {
+    descEl.textContent = "Descuadre: 0.00 € (PERFECTO)";
+    descEl.className = "cierre-descuadre ok";
+  } else {
+    const signo = descuadre > 0 ? "+" : "";
+    descEl.textContent = `Descuadre: ${signo}${descuadre.toFixed(2)} €`;
+    descEl.className = "cierre-descuadre bad";
+  }
+}
+
+async function guardarCierre() {
+  if(!confirm("¿Guardar el cierre de caja en la base de datos?")) return;
+  
+  const v = (id) => parseInt(document.getElementById("c-"+id).value) || 0;
+  const desglose = {
+    '50e': v('50'), '20e': v('20'), '10e': v('10'), '5e': v('5'),
+    '2e': v('2'), '1e': v('1'), '50c': v('050'), '20c': v('020'),
+    '10c': v('010'), '5c': v('005'), '2c': v('002'), '1c': v('001')
+  };
+  
+  const fondo = parseFloat(document.getElementById("c-fondo").value) || 0;
+  const teorico = fondo + cierreStats.ef;
+  const real = parseFloat(document.getElementById("c-real").textContent);
+  
+  const payload = {
+    fondo_inicial: fondo.toFixed(2),
+    ventas_efectivo: cierreStats.ef.toFixed(2),
+    ventas_tarjeta: cierreStats.tj.toFixed(2),
+    teorico_efectivo: teorico.toFixed(2),
+    real_efectivo: real.toFixed(2),
+    descuadre: (real - teorico).toFixed(2),
+    desglose: desglose
+  };
+  
+  const res = await fetch("/api/cierre", {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(payload)
+  });
+  
+  if(res.ok) {
+    toast("🔒 Cierre de caja guardado con éxito");
+    closeCierre();
+  } else {
+    toast("❌ Error guardando el cierre");
+  }
+}
+
+function stepCierre(id, delta) {
+  const input = document.getElementById("c-" + id);
+  let val = parseInt(input.value) || 0;
+  val += delta;
+  if (val < 0) val = 0; // Evitamos billetes negativos
+  input.value = val;
+  calcCierre(); // Recalcula el total automáticamente al tocar el botón
 }
 
 /* === INIT === */

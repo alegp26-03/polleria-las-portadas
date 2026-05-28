@@ -1,0 +1,2 @@
+timestamp,fondo_inicial,ventas_efectivo,ventas_tarjeta,teorico_efectivo,real_efectivo,descuadre,desglose_json
+2026-05-28 18:22:43,50.00,0.00,0.00,50.00,50.00,0.00,"{""50e"": 1, ""20e"": 0, ""10e"": 0, ""5e"": 0, ""2e"": 0, ""1e"": 0, ""50c"": 0, ""20c"": 0, ""10c"": 0, ""5c"": 0, ""2c"": 0, ""1c"": 0}"
