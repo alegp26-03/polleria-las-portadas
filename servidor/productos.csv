@@ -1,0 +1,70 @@
+id,nombre,precio,categoria
+1,Medio pollo asado,6.5,Pollos
+2,Medio pollo frito,6.5,Pollos
+3,Pollo asado,11.0,Pollos
+4,Pollo con patatas,14.0,Pollos
+5,Pollo frito,11.0,Pollos
+6,Ave,5.0,Bocatas
+7,Curripipi,6.5,Bocatas
+8,Empanao,6.5,Bocatas
+9,Mantecaito,6.0,Bocatas
+10,Piripi,6.0,Bocatas
+11,Serranito,6.5,Bocatas
+12,Hulk,4.0,Perritos
+13,Queso y bacon,3.0,Perritos
+14,Solo,2.0,Perritos
+15,1/4 de adobo,6.5,Fritos
+16,1/4 de boquerón,6.5,Fritos
+17,1/4 de chocos,6.5,Fritos
+18,Capirotes de gambas,3.5,Fritos
+19,Flamenquín,6.0,Fritos
+20,Lagrimitas,6.0,Fritos
+21,Nuggets de pollo,5.0,Fritos
+22,Pavías de bacalao,5.0,Fritos
+23,Pechuga empanada,6.0,Fritos
+24,Chicharrones,20.0,Otros platos
+25,Chipirón a la plancha,7.0,Otros platos
+26,Pechuga a la plancha,6.0,Otros platos
+27,Solomillo al whisky,8.0,Otros platos
+28,Alioli,0.8,Salsas
+29,Barbacoa,0.8,Salsas
+30,Miel y mostaza,0.8,Salsas
+31,Salsas miarma toa,3.0,Salsas
+32,Verde,0.8,Salsas
+33,Whisky,0.8,Salsas
+34,Agua 0.5L,0.5,Bebidas
+35,Agua 1.5L,1.0,Bebidas
+36,Bebida energética,1.0,Bebidas
+37,Cerveza 1L,2.5,Bebidas
+38,Lata cerveza,1.5,Bebidas
+39,Lata refresco,1.5,Bebidas
+40,Monster,2.0,Bebidas
+41,Refresco 2L,2.5,Bebidas
+42,Ave,3.5,Sándwiches
+43,Especial 3 panes,5.0,Sándwiches
+44,Hippy,4.0,Sándwiches
+45,Vegetal atún,4.0,Sándwiches
+46,Gambas al ajillo,5.5,Fritos / Croquetas caseras
+47,Jamón,5.5,Fritos / Croquetas caseras
+48,Pollo,5.5,Fritos / Croquetas caseras
+49,Queso de cabra con cebolla caramelizada,5.5,Fritos / Croquetas caseras
+50,1/2 envase de patatas,3.5,Patatas
+51,Cartucho de patatas,2.0,Patatas
+52,Envase de patatas,4.5,Patatas
+53,Patatas gratinadas,5.0,Patatas
+54,Ensaladilla,4.0,Aliños
+55,Salpicón de marisco,4.0,Aliños
+56,Bruto,23.0,Bocatas / Especiales
+57,Super-serranito,23.0,Bocatas / Especiales
+58,Extra de bacon,0.8,Ingredientes extra
+59,Extra de huevo,0.8,Ingredientes extra
+60,Extra de queso,0.8,Ingredientes extra
+61,Aceitunas,4.0,Otros platos / Extra
+62,Pan barra,0.7,Otros platos / Extra
+63,Patatas bolsa,1.5,Otros platos / Extra
+64,Postres tarros,3.5,Otros platos / Extra
+65,Anika,4.0,Hamburguesas
+66,Buey,8.0,Hamburguesas
+67,Completa,4.0,Hamburguesas
+68,Doble,5.5,Hamburguesas
+69,Sola con queso,3.0,Hamburguesas

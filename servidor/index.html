@@ -1,135 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-TPV - Terminal Punto de Venta
-Servidor Flask + Frontend táctil integrado
-"""
-
-import csv, os, io, json
-from datetime import datetime
-from flask import Flask, request, jsonify, Response
-
-app = Flask(__name__)
-
-BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
-CSV_PROD   = os.path.join(BASE_DIR, "productos.csv")
-CSV_VENTAS = os.path.join(BASE_DIR, "ventas.csv")
-
-# --- Utilidades CSV ---
-def leer_productos():
-    productos = []
-    if not os.path.exists(CSV_PROD):
-        return productos
-    with open(CSV_PROD, newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            row["id"]     = int(row["id"])
-            row["precio"] = float(row["precio"])
-            productos.append(row)
-    return productos
-
-def guardar_productos(productos):
-    with open(CSV_PROD, "w", newline="", encoding="utf-8") as f:F
-    writer = csv.DictWriter(f, fieldnames=["id","nombre","precio","categoria"])
-    writer.writeheader()
-    for p in productos:
-          writer.writerow(p)
-
-def siguiente_id(productos):
-    if not productos:
-        return 1
-    return max(p["id"] for p in productos) + 1
-
-def registrar_venta(data):
-    es_nuevo = not os.path.exists(CSV_VENTAS) or os.path.getsize(CSV_VENTAS) == 0
-    with open(CSV_VENTAS, "a", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        if es_nuevo:
-            writer.writerow(["timestamp","items_json","total","pagado_efectivo","pagado_tarjeta","cambio","metodo_pago"])
-        writer.writerow([
-            data.get("timestamp", ""),
-            json.dumps(data.get("items", []), ensure_ascii=False),
-            data.get("total", "0.00"),
-            data.get("pagado_efectivo", "0.00"),
-            data.get("pagado_tarjeta", "0.00"),
-            data.get("cambio", "0.00"),
-            data.get("metodo_pago", "efectivo")
-        ])
-
-def leer_ventas_hoy():
-    ventas = []
-    if not os.path.exists(CSV_VENTAS) or os.path.getsize(CSV_VENTAS) == 0:
-        return ventas
-    hoy = datetime.now().strftime("%Y-%m-%d")
-    with open(CSV_VENTAS, newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            ts = row.get("timestamp", "")
-            if ts and ts.startswith(hoy):
-                try:
-                    row["items"] = json.loads(row.get("items_json", "[]"))
-                except:
-                    row["items"] = []
-                row.pop("items_json", None)
-                ventas.append(row)
-    return ventas
-
-# --- API ---
-@app.route("/api/productos", methods=["GET"])
-def api_get_productos():
-    return jsonify(leer_productos())
-
-@app.route("/api/productos", methods=["POST"])
-def api_add_producto():
-    data = request.json
-    productos = leer_productos()
-    nuevo = {
-        "id":        siguiente_id(productos),
-        "nombre":    data["nombre"],
-        "precio":    round(float(data["precio"]), 2),
-        "categoria": data["categoria"]
-    }
-    productos.append(nuevo)
-    guardar_productos(productos)
-    return jsonify(nuevo), 201
-
-@app.route("/api/productos/<int:pid>", methods=["PUT"])
-def api_update_producto(pid):
-    data = request.json
-    productos = leer_productos()
-    for p in productos:
-        if p["id"] == pid:
-            if "nombre"    in data: p["nombre"]    = data["nombre"]
-            if "precio"    in data: p["precio"]    = round(float(data["precio"]), 2)
-            if "categoria" in data: p["categoria"] = data["categoria"]
-            guardar_productos(productos)
-            return jsonify(p)
-    return jsonify({"error": "Producto no encontrado"}), 404
-
-@app.route("/api/productos/<int:pid>", methods=["DELETE"])
-def api_delete_producto(pid):
-    productos = leer_productos()
-    productos = [p for p in productos if p["id"] != pid]
-    guardar_productos(productos)
-    return jsonify({"ok": True})
-
-@app.route("/api/venta", methods=["POST"])
-def api_registrar_venta():
-    data = request.json
-    data["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    registrar_venta(data)
-    return jsonify({"ok": True, "timestamp": data["timestamp"]}), 201
-
-@app.route("/api/ventas", methods=["GET"])
-def api_get_ventas():
-    return jsonify(leer_ventas_hoy())
-
-# --- Frontend ---
-@app.route("/")
-def index():
-    return Response(HTML_PAGE, mimetype="text/html")
-
-HTML_PAGE = r"""<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -141,8 +10,12 @@ HTML_PAGE = r"""<!DOCTYPE html>
 html,body{height:100%;font-family:'Segoe UI',Tahoma,Arial,sans-serif;overflow:hidden;background:#f0f2f5;
   -webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 button{cursor:pointer;border:none;outline:none;font-family:inherit;-webkit-tap-highlight-color:transparent}
-::-webkit-scrollbar{width:8px}
-::-webkit-scrollbar-thumb{background:#bbb;border-radius:4px}
+
+/* == SCROLLBARS TÁCTILES == */
+::-webkit-scrollbar { width: 48px; height: 48px; }
+::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 12px; }
+::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 12px; border: 4px solid #f1f5f9;}
+::-webkit-scrollbar-thumb:active { background: #64748b; }
 
 /* == LAYOUT == */
 #app{display:grid;grid-template-rows:56px 1fr;grid-template-columns:1fr 400px;height:100vh}
@@ -377,6 +250,33 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;-webkit-tap-h
   opacity:0;transition:opacity .3s;pointer-events:none}
 #toast.show{opacity:1}
 
+/* == PEDIDOS EN ESPERA == */
+.pedidos-modal .modal { width: 750px; max-width: 98vw; padding: 24px; }
+.pedidos-list { max-height: 400px; overflow-y: auto; -webkit-overflow-scrolling: touch; margin-top: 15px; }
+.pedidos-list table { width: 100%; border-collapse: collapse; }
+.pedidos-list th { background: #f1f5f9; padding: 12px; font-size: 14px; color: #64748b; text-align: left; position: sticky; top: 0; }
+.pedidos-list td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 15px; vertical-align: middle; }
+.btn-cargar-pedido { background: #3b82f6; color: #fff; padding: 12px 20px;; border-radius: 8px; font-weight: bold; font-size: 16px; min-width: 100px;}
+.btn-cargar-pedido:active { background: #2563eb; }
+.al-del { width: 55px; height: 55px; font-size: 24px; margin-left: 12px !important; border-radius: 12px; background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; }
+.al-del:active { background: #ef4444; color: #fff; transform: scale(0.9); }
+
+#order-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+#btn-comanda { background: #3b82f6; color: #fff; }
+#btn-comanda:disabled { background: #93c5fd; }
+#btn-espera { background: #f59e0b; color: #fff; }
+#btn-espera:disabled { background: #fcd34d; }
+
+.form-espera-modal .modal { width: 400px; padding: 24px; }
+.form-espera-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.form-espera-field label { font-size: 14px; font-weight: 600; color: #475569; }
+.form-espera-field input { height: 50px; border: 2px solid #e2e8f0; border-radius: 10px; padding: 0 14px; font-size: 18px; background: #fff; }
+.form-espera-field input[readonly] { cursor: pointer; background: #f8fafc; }
+.pedido-loaded-banner { background: #fef3c7; color: #b45309; padding: 8px; text-align: center; font-size: 13px; font-weight: bold; border-bottom: 1px solid #fde68a; display: none; }
+
+#edit-base-price { cursor: pointer; background: #eff6ff; color: #2563eb; padding: 10px 16px; border-radius: 10px; display: inline-block; margin: 0 auto 16px; font-weight: 800; border: 2px dashed #93c5fd; transition: 0.15s; }
+#edit-base-price:active { transform: scale(0.95); background: #dbeafe; }
+
 /* == PRINT STYLES == */
 @media print{
   @page{margin:0;size:80mm auto}
@@ -389,32 +289,42 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;-webkit-tap-h
 </head>
 <body>
 <div id="app">
-  <!-- TOP BAR -->
   <div id="topbar">
     <div class="title">🐔 Pollería Las Portadas</div>
     <div class="clock" id="clock">00:00:00</div>
+    <button onclick="openPedidosModal()">📞 Pedidos</button>
     <button onclick="openVentas()">📊 Ventas</button>
     <button onclick="openAdmin()">⚙️ Gestión</button>
   </div>
   <div id="left">
+    <div style="padding: 10px 12px 0;">
+      <button onclick="anadirVarios()" style="width: 100%; padding: 12px; background: #8b5cf6; color: white; border-radius: 10px; font-size: 16px; font-weight: bold; box-shadow: 0 4px 6px -1px rgba(139, 92, 246, 0.2);">
+        ➕ Añadir Varios (Fuera de Carta)
+      </button>
+    </div>
+    
     <div id="cat-tabs"></div>
     <div id="subcat-tabs"></div>
     <div id="prod-grid"></div>
   </div>
   <div id="right">
-    <div id="order-header"><span>🛒 Pedido Actual</span></div>
+    <div id="order-header">
+      <span>🛒 Pedido Actual</span>
+    </div>
+    <div id="pedido-loaded-banner" class="pedido-loaded-banner"></div>
     <div id="order-list"><div id="order-empty">Toca un producto para empezar</div></div>
     <div id="order-footer">
       <div id="order-total">TOTAL: 0,00 €</div>
       <div id="order-actions">
         <button id="btn-limpiar" onclick="clearOrder()">🗑️ Limpiar</button>
+        <button id="btn-comanda" onclick="imprimirComanda()" disabled>🖨️ Comanda</button>
+        <button id="btn-espera" onclick="abrirModalEspera()" disabled>⏳ Espera</button>
         <button id="btn-cobrar" onclick="openPay()" disabled>💶 Cobrar</button>
-      </div>
+    </div>
     </div>
   </div>
 </div>
 
-<!-- NUMPAD MODAL -->
 <div class="modal-overlay numpad-modal" id="numpad-overlay">
   <div class="modal">
     <div class="numpad-title" id="numpad-title">Introduce valor</div>
@@ -429,7 +339,6 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;-webkit-tap-h
   </div>
 </div>
 
-<!-- PAYMENT MODAL -->
 <div class="modal-overlay pay-modal" id="pay-overlay">
   <div class="modal">
     <div class="pay-total-label">Total a cobrar</div>
@@ -439,7 +348,6 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;-webkit-tap-h
       <button class="pay-tab tab-tarjeta" onclick="setPayTab('tarjeta')">💳 Tarjeta</button>
       <button class="pay-tab tab-mixto" onclick="setPayTab('mixto')">💵+💳 Mixto</button>
     </div>
-    <!-- EFECTIVO -->
     <div class="pay-section active" id="pay-sec-efectivo">
       <div class="pay-field-label">💵 Efectivo entregado</div>
       <div class="pay-cash-display" id="pay-cash-ef">0</div>
@@ -452,14 +360,12 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;-webkit-tap-h
       </div>
       <div class="pay-change negative" id="pay-change-ef">Cambio: 0,00 €</div>
     </div>
-    <!-- TARJETA -->
     <div class="pay-section" id="pay-sec-tarjeta">
       <div class="pay-card-info">
         <span class="big-icon">💳</span>
         Cobro con tarjeta por el total<br><strong id="pay-card-total">0,00 €</strong>
       </div>
     </div>
-    <!-- MIXTO -->
     <div class="pay-section" id="pay-sec-mixto">
       <div class="pay-field-label">💵 Parte en efectivo</div>
       <div class="pay-cash-display" id="pay-cash-mx">0</div>
@@ -480,11 +386,12 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;-webkit-tap-h
   </div>
 </div>
 
-<!-- EDIT ITEM MODAL -->
 <div class="modal-overlay edit-modal" id="edit-overlay">
   <div class="modal">
     <div class="edit-title" id="edit-title">Editar producto</div>
-    <div class="edit-base-price" id="edit-base-price">Precio base: 0,00 €</div>
+    <div style="text-align: center;">
+      <div id="edit-base-price" onclick="editarPrecioBase()">✏️ Precio base: 0,00 €</div>
+    </div>
     <div class="edit-section">
       <h4>🚫 Quitar ingrediente (gratis)</h4>
       <div class="edit-toggles" id="edit-removals"></div>
@@ -505,7 +412,6 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;-webkit-tap-h
   </div>
 </div>
 
-<!-- ADMIN MODAL -->
 <div class="modal-overlay admin-modal" id="admin-overlay">
   <div class="modal">
     <div class="admin-title">⚙️ Gestión de Productos</div>
@@ -548,7 +454,6 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;-webkit-tap-h
   </div>
 </div>
 
-<!-- SALES MODAL -->
 <div class="modal-overlay ventas-modal" id="ventas-overlay">
   <div class="modal">
     <div class="ventas-title">📊 Ventas de Hoy</div>
@@ -558,21 +463,51 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;-webkit-tap-h
   </div>
 </div>
 
-<!-- RECEIPT MODAL -->
 <div class="modal-overlay receipt-modal" id="receipt-overlay">
   <div class="modal">
     <div id="receipt-content"></div>
     <div class="receipt-actions">
-      <label style="display:flex; align-items:center; gap:8px; font-weight:bold; cursor:pointer;">
-        <input type="checkbox" id="chk-duplicar" style="width:20px; height:20px;"> Duplicar ticket
-      </label>
       <button class="btn-receipt-close" onclick="closeReceipt()">Cerrar</button>
       <button class="btn-receipt-print" onclick="window.print()">🖨️ Imprimir</button>
     </div>
   </div>
 </div>
 
-<!-- VIRTUAL KEYBOARD -->
+<div class="modal-overlay pedidos-modal" id="pedidos-overlay">
+  <div class="modal">
+    <div class="admin-title">📞 Pedidos en Espera</div>
+    
+    <div style="margin-bottom: 15px; display: flex; gap: 10px;">
+      <input type="text" id="input-buscar-pedido" readonly 
+             placeholder="🔍 Buscar nombre o teléfono..." 
+             onclick="openVKB('input-buscar-pedido')" oninput="renderTablaPedidos()"
+             style="flex: 1; height: 50px; border: 2px solid #e2e8f0; border-radius: 10px; padding: 0 14px; font-size: 16px; background: #fff; cursor: pointer;">
+      <button onclick="limpiarBusquedaPedidos()" style="background: #ef4444; color: #fff; padding: 0 20px; border-radius: 10px; font-size: 18px; font-weight: bold;">✕</button>
+    </div>
+
+    <div class="pedidos-list" id="pedidos-list">Cargando...</div>
+    <button class="btn-admin-close" onclick="closePedidosModal()">Cerrar</button>
+  </div>
+</div>
+
+<div class="modal-overlay form-espera-modal" id="form-espera-overlay">
+  <div class="modal">
+    <div class="admin-title" id="titulo-espera">Guardar Pedido</div>
+    <div class="form-espera-field">
+      <label>Nombre del Cliente</label>
+      <input id="input-espera-nombre" readonly placeholder="Toca para escribir texto" onclick="openVKB('input-espera-nombre')">
+    </div>
+    <div class="form-espera-field">
+      <label>Teléfono (Opcional)</label>
+      <input id="input-espera-tel" readonly placeholder="Toca para abrir teclado numérico" onclick="openNumpad('Teléfono del cliente', function(v){ document.getElementById('input-espera-tel').value=v }, true)">
+    </div>
+    <div class="edit-actions">
+      <button class="btn-edit-cancel" onclick="closeModalEspera()">Cancelar</button>
+      <button class="btn-edit-save" onclick="guardarPedidoEspera()">✔ Guardar</button>
+    </div>
+  </div>
+</div>
+
 <div class="vkb-overlay" id="vkb-overlay">
   <div class="vkb">
     <div class="vkb-display" id="vkb-display"></div>
@@ -580,21 +515,26 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;-webkit-tap-h
   </div>
 </div>
 
-<!-- TOAST -->
 <div id="toast"></div>
 
 <script>
 /* === STATE === */
 let productos = [];
-// order items: {id, nombre, precioBase, qty, removals:[], extras:[], notes:"", precioUnit (computed)}
 let order = [];
+let ventasCache = [];
+let pedidosPendientesCache = [];
+let currentPedidoId = null;
 let npCallback = null;
 let npValue = "0";
+let npIsString = false;
 let vkbTarget = null;
 let vkbShift = false;
 let payMode = "efectivo";
 let payVals = {ef:"0", mx:"0"};
 let editIdx = -1;
+let editRemovals = [], editExtras = [], editNotes = "";
+let editPrecioBaseTemporal = 0; 
+let contadorVarios = -1;
 
 const EXTRA_PRICE = 0.80;
 const REMOVALS = ["Sin lechuga","Sin tomate","Sin cebolla","Sin salsa","Sin queso","Sin pan"];
@@ -614,14 +554,12 @@ async function loadProducts(){
 }
 
 let activeCat="Todos";
-let activeSubCat="Todos"; // Nuevo estado para la subcategoría
+let activeSubCat="Todos";
 
-// Extraer solo la categoría Padre (lo que hay antes del '/')
 function getParentCats(){ 
   return [...new Set(productos.map(p => p.categoria.split('/')[0].trim()))]; 
 }
 
-// Extraer las categorías completas que pertenecen a un Padre específico
 function getSubCats(parent){
   return [...new Set(productos.filter(p => p.categoria.split('/')[0].trim() === parent).map(p => p.categoria))];
 }
@@ -631,60 +569,39 @@ function renderCats(){
   document.getElementById("cat-tabs").innerHTML=parents.map(c=>
     `<button class="cat-tab ${c===activeCat?"active":""}" onclick="setCat('${c}')">${c}</button>`
   ).join("");
-  renderSubCats(); // Llamar a renderizar subcategorías
+  renderSubCats();
 }
 
 function renderSubCats(){
   const el = document.getElementById("subcat-tabs");
-  if(activeCat === "Todos"){
-    el.innerHTML = ""; // Si estamos en "Todos", no hay subpestañas
-    return;
-  }
-  
+  if(activeCat === "Todos"){ el.innerHTML = ""; return; }
   const subs = getSubCats(activeCat);
-  if(subs.length <= 1){
-    el.innerHTML = ""; // Si no hay subcategorías (solo hay 1 tipo general), ocultamos la barra
-    return;
-  }
+  if(subs.length <= 1){ el.innerHTML = ""; return; }
 
-  // Pintar el botón de "Todo" dentro de la categoría y luego un botón por subcategoría
   let html = `<button class="subcat-tab ${activeSubCat==="Todos"?"active":""}" onclick="setSubCat('Todos')">Todo ${activeCat}</button>`;
-  
   subs.forEach(s => {
-    // Si tiene '/', el nombre del botón es la parte derecha. Si no, le llamamos "Generales"
     const label = s.includes('/') ? s.split('/')[1].trim() : "Generales";
     html += `<button class="subcat-tab ${activeSubCat===s?"active":""}" onclick="setSubCat('${s}')">${label}</button>`;
   });
-  
   el.innerHTML = html;
 }
 
 function setCat(c){ 
-  activeCat = c; 
-  activeSubCat = "Todos"; // Al cambiar de padre, reseteamos la subcategoría
-  renderCats(); 
-  renderGrid(); 
+  activeCat = c; activeSubCat = "Todos";
+  renderCats(); renderGrid(); 
 }
 
 function setSubCat(sc){
   activeSubCat = sc;
-  renderSubCats(); // Solo repintamos las subpestañas para actualizar la clase activa
-  renderGrid();
+  renderSubCats(); renderGrid();
 }
 
 function renderGrid(){
   let list = productos;
-  
   if(activeCat !== "Todos"){
-    if(activeSubCat === "Todos"){
-      // Mostrar todos los productos del padre seleccionado (incluye subcategorías)
-      list = productos.filter(p => p.categoria.split('/')[0].trim() === activeCat);
-    } else {
-      // Mostrar solo los productos de la subcategoría exacta elegida
-      list = productos.filter(p => p.categoria === activeSubCat);
-    }
+    if(activeSubCat === "Todos") list = productos.filter(p => p.categoria.split('/')[0].trim() === activeCat);
+    else list = productos.filter(p => p.categoria === activeSubCat);
   }
-  
   document.getElementById("prod-grid").innerHTML=list.map(p=>
     `<button class="prod-btn" onclick="addToOrder(${p.id})">
       <span class="pname">${esc(p.nombre)}</span>
@@ -696,27 +613,56 @@ function renderGrid(){
 function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 
 /* === ORDER === */
-function addToOrder(id){
-  const p=productos.find(x=>x.id===id); if(!p) return;
-  // Each addition is a new line so user can customize independently
-  order.push({id:p.id,nombre:p.nombre,precioBase:p.precio,qty:1,removals:[],extras:[],notes:""});
+function addToOrder(id) {
+  const p = productos.find(x => x.id === id); 
+  if (!p) return;
+
+  const indiceExistente = order.findIndex(item => 
+    item.id === id && 
+    item.removals.length === 0 && 
+    item.extras.length === 0 && 
+    item.notes === "" && 
+    item.precioBase === p.precio
+  );
+
+  if (indiceExistente >= 0) {
+    order[indiceExistente].qty += 1;
+  } else {
+    order.push({
+      id: p.id, nombre: p.nombre, precioBase: p.precio, qty: 1, removals: [], extras: [], notes: ""
+    });
+  }
   renderOrder();
 }
-function getItemPrice(it){ return it.precioBase + it.extras.length * EXTRA_PRICE; }
+
+function anadirVarios() {
+  openNumpad("Precio del producto extra", function(v) {
+    const precio = parseFloat(v);
+    if (precio <= 0) return; 
+    order.push({
+      id: contadorVarios, nombre: "Varios", precioBase: precio, qty: 1, removals: [], extras: [], notes: "" 
+    });
+    contadorVarios--; 
+    renderOrder();    
+    toast("✅ Varios añadido");
+  }, false);
+}
+
 function getModsText(it){
   let parts=[];
-  it.removals.forEach(r=>parts.push(r));
-  it.extras.forEach(e=>parts.push(e+" +0,80€"));
+  (it.removals||[]).forEach(r=>parts.push(r));
+  (it.extras||[]).forEach(e=>parts.push(e+" +0,80€"));
   if(it.notes) parts.push("📝 "+it.notes);
   return parts.join(" · ");
 }
+
 function renderOrder(){
   const el=document.getElementById("order-list");
   if(!order.length){ el.innerHTML='<div id="order-empty">Toca un producto para empezar</div>'; }
   else{
     el.innerHTML=order.map((it,i)=>{
-      const up=getItemPrice(it);
-      const mods=getModsText(it);
+      const up = getSafeItemPrice(it);
+      const mods = getModsText(it);
       return `<div class="order-item">
         <div class="oi-info" onclick="openEdit(${i})">
           <span class="oi-name">✏️ ${esc(it.nombre)}</span>
@@ -732,28 +678,54 @@ function renderOrder(){
       </div>`;
     }).join("");
   }
+  
   const total=getTotal();
   document.getElementById("order-total").textContent="TOTAL: "+total.toFixed(2)+" €";
-  document.getElementById("btn-cobrar").disabled=!order.length;
+  
+  const hasItems = order.length > 0;
+  document.getElementById("btn-cobrar").disabled = !hasItems;
+  document.getElementById("btn-comanda").disabled = !hasItems;
+  document.getElementById("btn-espera").disabled = !hasItems;
+  
+  const banner = document.getElementById("pedido-loaded-banner");
+  if (currentPedidoId) {
+    banner.style.display = "block";
+    banner.textContent = `Modificando Pedido #${currentPedidoId}`;
+  } else {
+    banner.style.display = "none";
+  }
 }
+
 function oqty(i,d){ order[i].qty+=d; if(order[i].qty<1) order.splice(i,1); renderOrder(); }
 function odel(i){ order.splice(i,1); renderOrder(); }
-function clearOrder(){ order=[]; renderOrder(); }
-function getTotal(){ return order.reduce((s,x)=>s+getItemPrice(x)*x.qty,0); }
+function clearOrder(){ currentPedidoId = null; order=[]; renderOrder(); }
+
+function getSafeItemPrice(it) {
+    let pBase = parseFloat(it.precioBase);
+    if(isNaN(pBase)) {
+        const ref = productos.find(p => p.nombre === it.nombre);
+        pBase = ref ? parseFloat(ref.precio) : 0;
+    }
+    const nx = (it.extras && Array.isArray(it.extras)) ? it.extras.length : 0;
+    return pBase + (nx * EXTRA_PRICE);
+}
+
+function getTotal(){ 
+    return order.reduce((s,x) => s + (getSafeItemPrice(x) * x.qty), 0); 
+}
 
 /* === EDIT ITEM === */
-let editRemovals=[], editExtras=[], editNotes="";
 function openEdit(i){
-  editIdx=i;
-  const it=order[i];
+  editIdx=i; const it=order[i];
   editRemovals=[...it.removals]; editExtras=[...it.extras]; editNotes=it.notes;
+  editPrecioBaseTemporal=it.precioBase; 
   document.getElementById("edit-title").textContent="✏️ "+it.nombre;
-  document.getElementById("edit-base-price").textContent="Precio base: "+it.precioBase.toFixed(2)+" €";
+  document.getElementById("edit-base-price").innerHTML="✏️ Precio base: "+it.precioBase.toFixed(2)+" €";
   document.getElementById("edit-notes-input").value=editNotes;
-  renderEditToggles();
-  updateEditPrice();
+  renderEditToggles(); updateEditPrice();
   document.getElementById("edit-overlay").classList.add("open");
 }
+
 function renderEditToggles(){
   document.getElementById("edit-removals").innerHTML=REMOVALS.map(r=>{
     const active=editRemovals.includes(r);
@@ -764,48 +736,80 @@ function renderEditToggles(){
     return `<button class="edit-toggle extra ${active?"active":""}" onclick="toggleExtra('${e}')">${e}</button>`;
   }).join("");
 }
+
 function toggleRemoval(r){
   const idx=editRemovals.indexOf(r);
   if(idx>=0) editRemovals.splice(idx,1); else editRemovals.push(r);
   renderEditToggles(); updateEditPrice();
 }
+
 function toggleExtra(e){
   const idx=editExtras.indexOf(e);
   if(idx>=0) editExtras.splice(idx,1); else editExtras.push(e);
   renderEditToggles(); updateEditPrice();
 }
-function updateEditPrice(){
-  const it=order[editIdx];
-  const p=it.precioBase+editExtras.length*EXTRA_PRICE;
-  document.getElementById("edit-final-price").textContent="Precio: "+p.toFixed(2)+" €";
+
+function editarPrecioBase() {
+  openNumpad("Nuevo precio para esta línea", function(v) {
+    const p = parseFloat(v);
+    if (p >= 0) {
+      editPrecioBaseTemporal = p;
+      document.getElementById("edit-base-price").innerHTML = "✏️ Precio base: " + p.toFixed(2) + " €";
+      updateEditPrice();
+    }
+  }, false);
 }
+
+function updateEditPrice(){
+  const p = editPrecioBaseTemporal + editExtras.length * EXTRA_PRICE;
+  document.getElementById("edit-final-price").textContent = "Precio Total: " + p.toFixed(2) + " €";
+}
+
 function saveEdit(){
   order[editIdx].removals=[...editRemovals];
   order[editIdx].extras=[...editExtras];
   order[editIdx].notes=document.getElementById("edit-notes-input").value.trim();
-  closeEdit();
-  renderOrder();
+  order[editIdx].precioBase = editPrecioBaseTemporal; 
+  closeEdit(); renderOrder();
 }
 function closeEdit(){ document.getElementById("edit-overlay").classList.remove("open"); }
 
 /* === NUMPAD MODAL === */
-function openNumpad(title,cb){
-  npValue="0"; npCallback=cb;
-  document.getElementById("numpad-title").textContent=title;
-  document.getElementById("numpad-display").textContent="0";
+function openNumpad(title, cb, isString = false) {
+  npIsString = isString;
+  npValue = isString ? "" : "0"; 
+  npCallback = cb;
+  document.getElementById("numpad-title").textContent = title;
+  document.getElementById("numpad-display").textContent = npValue || "0";
   document.getElementById("numpad-overlay").classList.add("open");
 }
-function npPress(c){
-  if(npValue==="0"&&c!==".") npValue=c;
-  else{if(c==="."&&npValue.includes(".")) return; npValue+=c;}
-  document.getElementById("numpad-display").textContent=npValue;
+
+function npPress(c) {
+  if (npIsString && npValue === "" && c !== ".") npValue = c;
+  else {
+     if (npValue === "0" && c !== "." && !npIsString) npValue = c;
+     else { if (c === "." && npValue.includes(".")) return; npValue += c; }
+  }
+  document.getElementById("numpad-display").textContent = npValue;
 }
-function npBack(){ npValue=npValue.slice(0,-1)||"0"; document.getElementById("numpad-display").textContent=npValue; }
-function npClear(){ npValue="0"; document.getElementById("numpad-display").textContent="0"; }
-function npConfirm(){
+
+function npBack() {
+  npValue = npValue.slice(0, -1);
+  if (!npIsString && !npValue) npValue = "0";
+  document.getElementById("numpad-display").textContent = npValue || "0";
+}
+function npClear() {
+  npValue = npIsString ? "" : "0";
+  document.getElementById("numpad-display").textContent = npIsString ? "0" : "0";
+}
+function npConfirm() {
   document.getElementById("numpad-overlay").classList.remove("open");
-  const v=parseFloat(npValue)||0;
-  if(npCallback) npCallback(v.toFixed(2));
+  if (npIsString) {
+    if (npCallback) npCallback(npValue); 
+  } else {
+    const v = parseFloat(npValue) || 0;
+    if (npCallback) npCallback(v.toFixed(2)); 
+  }
 }
 
 /* === PAYMENT MODAL === */
@@ -831,8 +835,7 @@ function setPayTab(mode){
 function payNp(c,t){
   if(payVals[t]==="0"&&c!==".") payVals[t]=c;
   else{if(c==="."&&payVals[t].includes(".")) return; payVals[t]+=c;}
-  document.getElementById("pay-cash-"+t).textContent=payVals[t];
-  updatePayState();
+  document.getElementById("pay-cash-"+t).textContent=payVals[t]; updatePayState();
 }
 function payNpBack(t){ payVals[t]=payVals[t].slice(0,-1)||"0"; document.getElementById("pay-cash-"+t).textContent=payVals[t]; updatePayState(); }
 function payNpClear(t){ payVals[t]="0"; document.getElementById("pay-cash-"+t).textContent="0"; updatePayState(); }
@@ -860,100 +863,159 @@ function updatePayState(){
 async function confirmPay(){
   const total=getTotal();
   let pagado_efectivo=0, pagado_tarjeta=0, cambio=0, metodo=payMode;
+  
   if(payMode==="efectivo"){
     pagado_efectivo=parseFloat(payVals.ef)||0;
     cambio=pagado_efectivo-total;
-    pagado_tarjeta=0;
   } else if(payMode==="tarjeta"){
     pagado_tarjeta=total;
-    pagado_efectivo=0; cambio=0;
   } else {
     pagado_efectivo=Math.min(parseFloat(payVals.mx)||0,total);
     pagado_tarjeta=Math.max(total-pagado_efectivo,0);
-    cambio=0;
   }
-  const items=order.map(x=>({nombre:x.nombre,qty:x.qty,precioBase:x.precioBase,
-    precioUnit:getItemPrice(x),removals:x.removals,extras:x.extras,notes:x.notes}));
-  const body={items,total:total.toFixed(2),
-    pagado_efectivo:pagado_efectivo.toFixed(2),pagado_tarjeta:pagado_tarjeta.toFixed(2),
-    cambio:cambio.toFixed(2),metodo_pago:metodo};
-  const res=await fetch("/api/venta",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
-  const rd=await res.json();
-  closePay();
-  showReceipt(items,total,pagado_efectivo,pagado_tarjeta,cambio,metodo,rd.timestamp);
-  clearOrder();
-  toast("✅ Venta registrada correctamente");
+
+  const itemsMapeados = order.map(x => {
+      const pUnit = getSafeItemPrice(x);
+      return {
+          nombre: x.nombre,
+          qty: parseInt(x.qty) || 1,
+          precioBase: parseFloat(x.precioBase) || 0,
+          precioUnit: pUnit,
+          removals: x.removals || [],
+          extras: x.extras || [],
+          notes: x.notes || ""
+      };
+  });
+
+  const payload = {
+    metodo_pago: metodo,
+    pagado_efectivo: pagado_efectivo.toFixed(2),
+    pagado_tarjeta: pagado_tarjeta.toFixed(2),
+    cambio: cambio.toFixed(2),
+    items: itemsMapeados,
+    total: total.toFixed(2)
+  };
+
+  if(currentPedidoId) {
+      const res = await fetch(`/api/pedido/${currentPedidoId}/cobrar`, {
+        method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload)
+      });
+      const rd = await res.json();
+      closePay();
+      showReceipt(itemsMapeados, total, pagado_efectivo, pagado_tarjeta, cambio, metodo, rd.timestamp);
+      clearOrder();
+      toast("✅ Pedido cobrado correctamente");
+  } else {
+      const res = await fetch("/api/venta",{
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify(payload)
+      });
+      const rd = await res.json();
+      closePay();
+      showReceipt(itemsMapeados, total, pagado_efectivo, pagado_tarjeta, cambio, metodo, rd.timestamp);
+      clearOrder();
+      toast("✅ Venta registrada correctamente");
+  }
 }
 
-/* === RECEIPT === */
+/* === TICKET === */
 function showReceipt(items, total, efect, tarj, cambio, metodo, ts) {
-    const duplicar = document.getElementById('chk-duplicar').checked;
+    const totalNum = parseFloat(total) || 0;
+    const baseImponible = totalNum / 1.10;
+    const cuotaIva = totalNum - baseImponible;
+
+    let h = '<div class="ticket-individual" style="padding-bottom: 20px;">';
+    h += '<div class="rc-center rc-bold" style="font-size:16px">POLLERÍA LAS PORTADAS</div>';
+    h += '<div class="rc-center">Av. las Portadas, 2</div>';
+    h += '<div class="rc-center">41700 Dos Hermanas, Sevilla</div>';
+    h += '<div class="rc-center">Tel: 623700918</div>';
+    h += '<div class="rc-center">DNI: 48964063F</div>';
+    h += '<div class="rc-line"></div>';
+    h += `<div class="rc-center">${esc(ts)}</div>`;
+    h += '<div class="rc-line"></div>';
     
-    // Función interna para generar el diseño de un solo ticket
-    const generarTicketHTML = (subtitulo = "") => {
-        const totalNum = parseFloat(total);
-        const baseImponible = totalNum / 1.10;
-        const cuotaIva = totalNum - baseImponible;
-
-        let h = '<div class="ticket-individual" style="padding-bottom: 20px;">';
-        h += '<div class="rc-center rc-bold" style="font-size:16px">POLLERÍA LAS PORTADAS</div>';
-        if(subtitulo) h += `<div class="rc-center rc-bold">*** ${subtitulo} ***</div>`;
-        h += '<div class="rc-center">Av. las Portadas, 2</div>';
-        h += '<div class="rc-center">41700 Dos Hermanas, Sevilla</div>';
-        h += '<div class="rc-center">Tel: 623700918</div>';
-        h += '<div class="rc-center">DNI: 48964063F</div>';
-        h += '<div class="rc-line"></div>';
-        h += `<div class="rc-center">${esc(ts)}</div>`;
-        h += '<div class="rc-line"></div>';
+    items.forEach(it => {
+        let pu = parseFloat(it.precioUnit);
+        if(isNaN(pu)) pu = getSafeItemPrice(it); // Máxima seguridad
         
-        items.forEach(it => {
-            const lineTotal = (it.precioUnit * it.qty).toFixed(2);
-            h += `<div class="rc-row"><span>${it.qty}x ${esc(it.nombre)}</span><span>${lineTotal} €</span></div>`;
-            let mods = [];
-            it.removals.forEach(r => mods.push("  " + r));
-            it.extras.forEach(e => mods.push("  " + e + " +0,80€"));
-            if (it.notes) mods.push("  📝 " + it.notes);
-            if (mods.length) h += '<div class="rc-mods">' + mods.map(m => esc(m)).join("<br>") + '</div>';
-        });
-
-        h += '<div class="rc-line"></div>';
-        h += `<div class="rc-total-row"><span>TOTAL (IVA incl.)</span><span>${totalNum.toFixed(2)} €</span></div>`;
+        const qty = parseInt(it.qty) || 1;
+        const lineTotal = (pu * qty).toFixed(2);
         
-        // DESGLOSE DE IVA PARA HACIENDA
-        h += '<div style="margin-top: 5px; font-size: 11px;">';
-        h += `<div class="rc-row"><span>Base Imponible (10%):</span><span>${baseImponible.toFixed(2)} €</span></div>`;
-        h += `<div class="rc-row"><span>Cuota IVA:</span><span>${cuotaIva.toFixed(2)} €</span></div>`;
-        h += '</div>';
+        h += `<div class="rc-row"><span>${qty}x ${esc(it.nombre)}</span><span>${lineTotal} €</span></div>`;
+        
+        let mods = [];
+        (it.removals || []).forEach(r => mods.push("  " + r));
+        (it.extras || []).forEach(e => mods.push("  " + e + " +0,80€"));
+        if (it.notes) mods.push("  📝 " + it.notes);
+        if (mods.length) h += '<div class="rc-mods">' + mods.map(m => esc(m)).join("<br>") + '</div>';
+    });
 
-        h += '<div class="rc-line"></div>';
-        if (metodo === "efectivo") {
-            h += `<div class="rc-row"><span>Efectivo</span><span>${parseFloat(efect).toFixed(2)} €</span></div>`;
-            h += `<div class="rc-row"><span>Cambio</span><span>${parseFloat(cambio).toFixed(2)} €</span></div>`;
-        } else if (metodo === "tarjeta") {
-            h += `<div class="rc-row"><span>Tarjeta</span><span>${parseFloat(tarj).toFixed(2)} €</span></div>`;
-        } else {
-            h += `<div class="rc-row"><span>Efectivo</span><span>${parseFloat(efect).toFixed(2)} €</span></div>`;
-            h += `<div class="rc-row"><span>Tarjeta</span><span>${parseFloat(tarj).toFixed(2)} €</span></div>`;
-        }
-        h += '<div class="rc-line"></div>';
-        h += '<div class="rc-center rc-bold" style="margin-top:8px">¡Gracias por su visita!</div>';
-        h += '<div style="height: 20px; color: white;">.</div>';       
-        h += '</div>';
-        return h;
-    };
+    h += '<div class="rc-line"></div>';
+    h += `<div class="rc-total-row"><span>TOTAL (IVA incl.)</span><span>${totalNum.toFixed(2)} €</span></div>`;
+    
+    h += '<div style="margin-top: 5px; font-size: 11px;">';
+    h += `<div class="rc-row"><span>Base Imponible (10%):</span><span>${baseImponible.toFixed(2)} €</span></div>`;
+    h += `<div class="rc-row"><span>Cuota IVA:</span><span>${cuotaIva.toFixed(2)} €</span></div>`;
+    h += '</div>';
 
-    // Generamos el contenido (uno o dos tickets)
-    let finalHTML = generarTicketHTML(); // Ticket original
-    if (duplicar) {
-        finalHTML += '<div style="border-top: 2px dashed #000; margin: 40px 0; position: relative;">' + 
-                     '<span style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:#fff; padding:0 10px; font-size:10px;">TIJERAS / CORTE</span></div>';
-        finalHTML += generarTicketHTML("COPIA PARA CAJA");
+    h += '<div class="rc-line"></div>';
+    if (metodo === "efectivo") {
+        h += `<div class="rc-row"><span>Efectivo</span><span>${parseFloat(efect).toFixed(2)} €</span></div>`;
+        h += `<div class="rc-row"><span>Cambio</span><span>${parseFloat(cambio).toFixed(2)} €</span></div>`;
+    } else if (metodo === "tarjeta") {
+        h += `<div class="rc-row"><span>Tarjeta</span><span>${parseFloat(tarj).toFixed(2)} €</span></div>`;
+    } else {
+        h += `<div class="rc-row"><span>Efectivo</span><span>${parseFloat(efect).toFixed(2)} €</span></div>`;
+        h += `<div class="rc-row"><span>Tarjeta</span><span>${parseFloat(tarj).toFixed(2)} €</span></div>`;
     }
-
-    document.getElementById("receipt-content").innerHTML = finalHTML;
+    h += '<div class="rc-line"></div>';
+    h += '<div class="rc-center rc-bold" style="margin-top:8px">¡Gracias por su visita!</div>';
+    h += '<div style="height: 20px; color: white;">.</div></div>';
+    
+    document.getElementById("receipt-content").innerHTML = h;
     document.getElementById("receipt-overlay").classList.add("open");
 }
 function closeReceipt(){ document.getElementById("receipt-overlay").classList.remove("open"); }
+
+/* === IMPRIMIR COMANDA PARA COCINA === */
+function imprimirComanda() {
+  const ts = new Date().toLocaleString('es-ES');
+  let h = '<div style="font-family: Arial; padding-bottom: 20px; color: #000;">';
+  h += '<div class="rc-center rc-bold" style="font-size:20px; border-bottom:2px solid #000; margin-bottom:10px;">COMANDA COCINA</div>';
+  if(currentPedidoId) h += `<div class="rc-center rc-bold" style="font-size:16px;">PEDIDO #${currentPedidoId}</div>`;
+  h += `<div class="rc-center" style="margin-bottom:10px;">${ts}</div>`;
+  
+  let ultimaCategoria = "";
+
+  order.forEach(it => {
+    let catName = "VARIOS"; 
+    if (it.id >= 0) {
+      const prod = productos.find(x => x.id === it.id);
+      if (prod && prod.categoria) catName = prod.categoria.split('/')[0].trim().toUpperCase();
+    }
+
+    if (catName !== ultimaCategoria) {
+      h += `<div class="rc-center rc-bold" style="font-size:15px; margin-top:16px; margin-bottom:8px; letter-spacing:2px;">---------- ${esc(catName)} ----------</div>`;
+      ultimaCategoria = catName;
+    }
+    
+    h += `<div style="font-size:18px; font-weight:bold; margin-top:6px; padding-left:5px;">${it.qty}x ${esc(it.nombre)}</div>`;
+    
+    let mods = [];
+    (it.removals||[]).forEach(r => mods.push("🚫 " + r));
+    (it.extras||[]).forEach(e => mods.push("➕ " + e));
+    if (it.notes) mods.push("📝 " + it.notes);
+    
+    if (mods.length) h += '<div style="font-size:15px; margin-left:20px; margin-top:4px; margin-bottom:6px; font-weight:bold; line-height:1.4;">' + mods.map(m => esc(m)).join("<br>") + '</div>';
+    h += '<div style="border-bottom:1px dashed #bbb; margin:6px 0;"></div>';
+  });
+  
+  h += '</div>';
+  document.getElementById("receipt-content").innerHTML = h;
+  document.getElementById("receipt-overlay").classList.add("open");
+  setTimeout(() => window.print(), 300);
+}
 
 /* === ADMIN === */
 function openAdmin(){ renderAdminList(); document.getElementById("admin-overlay").classList.add("open"); }
@@ -997,28 +1059,151 @@ async function adminAdd(){
 /* === VENTAS === */
 async function openVentas(){
   const r=await fetch("/api/ventas"); const ventas=await r.json();
+  ventasCache = ventas;
   const nv=ventas.length;
+  
   const totalDay=ventas.reduce((s,v)=>s+parseFloat(v.total),0);
-  const totalEf=ventas.reduce((s,v)=>s+parseFloat(v.pagado_efectivo||0),0);
+  const totalEf=ventas.reduce((s,v)=>s+(parseFloat(v.pagado_efectivo||0) - parseFloat(v.cambio||0)),0);
   const totalTj=ventas.reduce((s,v)=>s+parseFloat(v.pagado_tarjeta||0),0);
+  
   document.getElementById("ventas-summary").innerHTML=
     `<div class="vs-box"><div class="vs-val">${nv}</div><div class="vs-lbl">Ventas</div></div>
      <div class="vs-box"><div class="vs-val">${totalDay.toFixed(2)} €</div><div class="vs-lbl">Facturado</div></div>
-     <div class="vs-box"><div class="vs-val">${totalEf.toFixed(2)} €</div><div class="vs-lbl">Efectivo</div></div>
+     <div class="vs-box"><div class="vs-val">${totalEf.toFixed(2)} €</div><div class="vs-lbl">Efectivo Real</div></div>
      <div class="vs-box"><div class="vs-val">${totalTj.toFixed(2)} €</div><div class="vs-lbl">Tarjeta</div></div>`;
-  let html='<table><tr><th>Hora</th><th>Items</th><th>Total</th><th>Método</th></tr>';
-  ventas.forEach(v=>{
+  
+  let html='<table><tr><th>Hora</th><th>Items</th><th>Total</th><th>Método</th><th style="text-align:center;">Ticket</th></tr>';
+  ventas.forEach((v, index)=>{
     const hora=(v.timestamp||"").split(" ")[1]||v.timestamp;
     const items=(v.items||[]).map(x=>x.qty+"x "+x.nombre).join(", ");
     const met=v.metodo_pago||"efectivo";
-    html+=`<tr><td>${esc(hora)}</td><td>${esc(items)}</td><td>${parseFloat(v.total).toFixed(2)} €</td>
-      <td>${esc(met)}</td></tr>`;
+    html+=`<tr>
+      <td>${esc(hora)}</td><td>${esc(items)}</td><td>${parseFloat(v.total).toFixed(2)} €</td><td>${esc(met)}</td>
+      <td style="text-align:center;">
+        <button class="btn-cargar-pedido" onclick="verTicketAntiguo(${index})" style="padding: 8px 14px; min-width: auto; font-size: 14px;">👁️ Ver</button>
+      </td>
+    </tr>`;
   });
   html+="</table>";
   document.getElementById("ventas-list").innerHTML=html;
   document.getElementById("ventas-overlay").classList.add("open");
 }
+
+function verTicketAntiguo(index) {
+  const v = ventasCache[index];
+  if (!v) return;
+  showReceipt(v.items, v.total, v.pagado_efectivo, v.pagado_tarjeta, v.cambio, v.metodo_pago, v.timestamp);
+} 
 function closeVentas(){ document.getElementById("ventas-overlay").classList.remove("open"); }
+
+/* === GESTIÓN DE PEDIDOS EN ESPERA === */
+async function openPedidosModal() {
+  document.getElementById("pedidos-overlay").classList.add("open");
+  document.getElementById("input-buscar-pedido").value = ""; 
+  document.getElementById("pedidos-list").innerHTML = "Cargando...";
+  const r = await fetch("/api/pedidos");
+  pedidosPendientesCache = await r.json();
+  renderTablaPedidos();
+}
+
+function limpiarBusquedaPedidos() {
+  document.getElementById("input-buscar-pedido").value = "";
+  renderTablaPedidos();
+}
+
+function renderTablaPedidos() {
+  const filtro = document.getElementById("input-buscar-pedido").value.toLowerCase().trim();
+  let html = '<table><tr><th>ID</th><th>Cliente</th><th>Total</th><th>Acciones</th></tr>';
+  
+  const pedidosFiltrados = pedidosPendientesCache.filter(p => {
+    const nom = (p.nombre_cliente || "").toLowerCase();
+    const tel = (p.telefono || "").toLowerCase();
+    return nom.includes(filtro) || tel.includes(filtro);
+  });
+
+  if (pedidosFiltrados.length === 0) {
+    html += `<tr><td colspan="4" style="text-align:center; color:#64748b; padding: 20px;">
+               ${filtro ? "No hay coincidencias con la búsqueda" : "No hay pedidos pendientes"}
+             </td></tr>`;
+  } else {
+    pedidosFiltrados.forEach(p => {
+      const info = (p.nombre_cliente || p.telefono) ? `${esc(p.nombre_cliente)} ${p.telefono ? '('+esc(p.telefono)+')' : ''}` : 'Sin nombre';
+      html += `<tr>
+        <td>#${p.id}</td><td>${info}</td><td>${p.total.toFixed(2)} €</td>
+        <td>
+          <button class="btn-cargar-pedido" onclick="cargarPedido(${p.id})">Cargar</button>
+          <button class="al-del" onclick="eliminarPedido(${p.id})" style="margin-left:8px;">🗑</button>
+        </td>
+      </tr>`;
+    });
+  }
+  html += "</table>";
+  document.getElementById("pedidos-list").innerHTML = html;
+}
+
+function closePedidosModal() { document.getElementById("pedidos-overlay").classList.remove("open"); }
+
+async function cargarPedido(id) {
+  const r = await fetch("/api/pedidos");
+  const pedidos = await r.json();
+  const p = pedidos.find(x => x.id === id);
+  if (p) {
+    order = p.items || [];
+    currentPedidoId = p.id;
+    document.getElementById("input-espera-nombre").value = p.nombre_cliente || "";
+    document.getElementById("input-espera-tel").value = p.telefono || "";
+    renderOrder();
+    closePedidosModal();
+    toast("📦 Pedido cargado. Listo para cobrar o editar.");
+  }
+}
+
+async function eliminarPedido(id) {
+  if(!confirm("¿Eliminar este pedido pendiente?")) return;
+  await fetch("/api/pedido/" + id, {method: "DELETE"});
+  toast("🗑️ Pedido eliminado");
+  openPedidosModal();
+  if(currentPedidoId === id) clearOrder();
+}
+
+function abrirModalEspera() {
+  if (currentPedidoId) {
+    document.getElementById("titulo-espera").textContent = "Actualizar Pedido #" + currentPedidoId;
+  } else {
+    document.getElementById("titulo-espera").textContent = "Guardar Nuevo Pedido";
+    document.getElementById("input-espera-nombre").value = "";
+    document.getElementById("input-espera-tel").value = "";
+  }
+  document.getElementById("form-espera-overlay").classList.add("open");
+}
+
+function closeModalEspera() { document.getElementById("form-espera-overlay").classList.remove("open"); }
+
+async function guardarPedidoEspera() {
+  const nombre = document.getElementById("input-espera-nombre").value.trim();
+  const tel = document.getElementById("input-espera-tel").value.trim();
+  const payload = {
+    nombre_cliente: nombre, telefono: tel || "Sin teléfono", items: order, total: getTotal().toFixed(2)
+  };
+
+  if (currentPedidoId) {
+    await fetch("/api/pedido/" + currentPedidoId, {
+      method: "PUT", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload)
+    });
+    toast("✅ Pedido actualizado");
+  } else {
+    const res = await fetch("/api/pedido", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if(data.ok) currentPedidoId = data.pedido.id;
+    toast("✅ Pedido guardado en espera");
+  }
+  closeModalEspera();
+  clearOrder();
+}
 
 /* === VIRTUAL KEYBOARD === */
 const ROWS_LOWER=[
@@ -1054,10 +1239,53 @@ function renderVKB(){
     }).join("")+'</div>'
   ).join("");
 }
-function vkType(c){ if(!vkbTarget)return; vkbTarget.value+=c; document.getElementById("vkb-display").textContent=vkbTarget.value; }
-function vkBack(){ if(!vkbTarget)return; vkbTarget.value=vkbTarget.value.slice(0,-1); document.getElementById("vkb-display").textContent=vkbTarget.value; }
+function vkType(c){ 
+    if(!vkbTarget)return; 
+    vkbTarget.value+=c; 
+    document.getElementById("vkb-display").textContent=vkbTarget.value; 
+    vkbTarget.dispatchEvent(new Event('input'));
+}
+function vkBack(){ 
+    if(!vkbTarget)return; 
+    vkbTarget.value=vkbTarget.value.slice(0,-1); 
+    document.getElementById("vkb-display").textContent=vkbTarget.value; 
+    vkbTarget.dispatchEvent(new Event('input'));
+}
 function vkShift(){ vkbShift=!vkbShift; renderVKB(); }
 function vkEnter(){ closeVKB(); }
+
+/* === HARDWARE KEYBOARD LISTENER === */
+window.addEventListener('keydown', function(e) {
+  if (document.getElementById("vkb-overlay").classList.contains("open")) {
+    if (e.key === 'Escape') { closeVKB(); e.preventDefault(); } 
+    else if (e.key === 'Enter') { vkEnter(); e.preventDefault(); } 
+    else if (e.key === 'Backspace') { vkBack(); e.preventDefault(); } 
+    else if (e.key.length === 1) { vkType(e.key); e.preventDefault(); }
+    return;
+  }
+  if (document.getElementById("numpad-overlay").classList.contains("open")) {
+    if (e.key === 'Escape') { document.getElementById("numpad-overlay").classList.remove("open"); e.preventDefault(); } 
+    else if (e.key === 'Enter') { npConfirm(); e.preventDefault(); } 
+    else if (e.key === 'Backspace') { npBack(); e.preventDefault(); } 
+    else if (e.key >= '0' && e.key <= '9') { npPress(e.key); e.preventDefault(); } 
+    else if (e.key === '.' || e.key === ',') { npPress('.'); e.preventDefault(); }
+    return;
+  }
+  if (document.getElementById("pay-overlay").classList.contains("open")) {
+    let t = payMode === 'efectivo' ? 'ef' : (payMode === 'mixto' ? 'mx' : null);
+    if (t) {
+      if (e.key === 'Escape') { closePay(); e.preventDefault(); } 
+      else if (e.key === 'Enter') { if (!document.getElementById("btn-pay-confirm").disabled) confirmPay(); e.preventDefault(); } 
+      else if (e.key === 'Backspace') { payNpBack(t); e.preventDefault(); } 
+      else if (e.key >= '0' && e.key <= '9') { payNp(e.key, t); e.preventDefault(); } 
+      else if (e.key === '.' || e.key === ',') { payNp('.', t); e.preventDefault(); }
+    } else if (payMode === 'tarjeta') {
+      if (e.key === 'Escape') { closePay(); e.preventDefault(); } 
+      else if (e.key === 'Enter') { confirmPay(); e.preventDefault(); }
+    }
+    return;
+  }
+});
 
 /* === TOAST === */
 function toast(msg){ const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2200); }
@@ -1067,11 +1295,3 @@ loadProducts();
 </script>
 </body>
 </html>
-"""
-
-if __name__ == "__main__":
-    print("=" * 50)
-    print("  🐔  Pollería Las Portadas - TPV")
-    print("  Abre http://localhost:5000 en tu navegador")
-    print("=" * 50)
-    app.run(host="0.0.0.0", port=5000, debug=False)
