@@ -199,6 +199,11 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;-webkit-tap-h
   font-size:16px;font-weight:700;margin-top:10px}
 .btn-admin-close:active{background:#475569}
 
+/* == STATS MODAL == */
+.stat-btn { background:#e2e8f0; color:#475569; padding:10px 16px; border-radius:10px; font-weight:bold; font-size:15px; }
+.stat-btn.active { background:#3b82f6; color:#fff; }
+.stat-date { padding:10px; border:2px solid #e2e8f0; border-radius:10px; font-size:15px; font-weight:bold; color:#1e293b; background:#fff; }
+
 /* == SALES MODAL == */
 .ventas-modal .modal{width:650px;max-width:98vw;padding:24px}
 .ventas-title{font-size:22px;font-weight:800;margin-bottom:6px}
@@ -294,6 +299,7 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;-webkit-tap-h
     <div class="clock" id="clock">00:00:00</div>
     <button onclick="openPedidosModal()">📞 Pedidos</button>
     <button onclick="openVentas()">📊 Ventas</button>
+    <button onclick="openStats()">📈 Estadísticas</button>
     <button onclick="openAdmin()">⚙️ Gestión</button>
   </div>
   <div id="left">
@@ -501,10 +507,63 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;-webkit-tap-h
       <label>Teléfono (Opcional)</label>
       <input id="input-espera-tel" readonly placeholder="Toca para abrir teclado numérico" onclick="openNumpad('Teléfono del cliente', function(v){ document.getElementById('input-espera-tel').value=v }, true)">
     </div>
+    <div class="form-espera-field">
+      <label>Hora de Recogida (Opcional)</label>
+      <input id="input-espera-hora" readonly placeholder="Toca para establecer hora" onclick="abrirSelectorHora()">
+    </div>
     <div class="edit-actions">
       <button class="btn-edit-cancel" onclick="closeModalEspera()">Cancelar</button>
       <button class="btn-edit-save" onclick="guardarPedidoEspera()">✔ Guardar</button>
     </div>
+  </div>
+</div>
+
+<div class="modal-overlay stats-modal" id="stats-overlay">
+  <div class="modal" style="width:900px; max-width:98vw; padding:24px; display:flex; flex-direction:column; max-height:95vh;">
+    <div class="admin-title">📈 Estadísticas de Ventas</div>
+    
+    <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
+      <button class="stat-btn active" id="btn-st-hoy" onclick="setStatRango(0, 'hoy')">Hoy</button>
+      <button class="stat-btn" id="btn-st-sem" onclick="setStatRango(6, 'sem')">7 Días</button>
+      <button class="stat-btn" id="btn-st-mes" onclick="setStatRango(29, 'mes')">30 Días</button>
+      <button class="stat-btn" id="btn-st-todo" onclick="setStatRango(9999, 'todo')">Desde el inicio</button>
+      
+      <div style="flex:1"></div>
+      
+      <input type="date" id="stat-desde" class="stat-date" onchange="customStatDate()">
+      <span style="align-self:center; font-weight:bold;">hasta</span>
+      <input type="date" id="stat-hasta" class="stat-date" onchange="customStatDate()">
+    </div>
+
+    <div style="background:#f1f5f9; padding:15px; border-radius:12px; display:flex; gap:15px; flex-wrap:wrap; margin-bottom:15px; align-items:flex-end;">
+      <div class="admin-field">
+        <label>Categoría</label>
+        <select id="stat-f-cat" onchange="updateStatProdFilter(); runStats();"><option>Todas</option></select>
+      </div>
+      <div class="admin-field">
+        <label>Plato exacto</label>
+        <select id="stat-f-prod" onchange="runStats()"><option>Todos</option></select>
+      </div>
+      <div class="admin-field">
+        <label>Agrupar por</label>
+        <select id="stat-group" onchange="runStats()">
+          <option value="cat_prod">Categoría ➞ Platos</option>
+          <option value="cat">Solo Categorías</option>
+          <option value="prod">Solo Platos</option>
+        </select>
+      </div>
+      <div style="display:flex; gap:12px; align-items:center; padding-bottom:12px; margin-left: auto;">
+        <label style="display:flex; align-items:center; gap:5px; font-weight:bold; cursor:pointer; font-size:15px;">
+          <input type="checkbox" id="stat-show-qty" checked onchange="runStats()" style="width:20px;height:20px;"> Cantidad
+        </label>
+        <label style="display:flex; align-items:center; gap:5px; font-weight:bold; cursor:pointer; font-size:15px;">
+          <input type="checkbox" id="stat-show-rev" checked onchange="runStats()" style="width:20px;height:20px;"> Dinero (€)
+        </label>
+      </div>
+    </div>
+
+    <div class="pedidos-list" style="flex:1; margin-top:0;" id="stats-list"></div>
+    <button class="btn-admin-close" onclick="closeStats()">Cerrar</button>
   </div>
 </div>
 
@@ -775,6 +834,29 @@ function saveEdit(){
 function closeEdit(){ document.getElementById("edit-overlay").classList.remove("open"); }
 
 /* === NUMPAD MODAL === */
+function abrirSelectorHora() {
+  const input = document.getElementById("input-espera-hora");
+  openNumpad("Hora de recogida (HH:MM)", function(v) {
+    if (v && v.length > 0) {
+      // Formatear la entrada para que sea HH:MM
+      let hora = v.replace(/[^\d]/g, '').substring(0, 4);
+      if (hora.length >= 2) {
+        let h = parseInt(hora.substring(0, 2), 10);
+        let m = 0;
+        if (hora.length === 4) {
+          m = parseInt(hora.substring(2, 4), 10);
+        }
+        // Validar rangos
+        if (h > 23) h = 23;
+        if (m > 59) m = 59;
+        input.value = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+      } else {
+        input.value = String(parseInt(hora, 10)).padStart(2, '0') + ':00';
+      }
+    }
+  }, true);
+}
+
 function openNumpad(title, cb, isString = false) {
   npIsString = isString;
   npValue = isString ? "" : "0"; 
@@ -903,7 +985,7 @@ async function confirmPay(){
       });
       const rd = await res.json();
       closePay();
-      showReceipt(itemsMapeados, total, pagado_efectivo, pagado_tarjeta, cambio, metodo, rd.timestamp);
+      showReceipt(itemsMapeados, total, pagado_efectivo, pagado_tarjeta, cambio, metodo, rd.timestamp, rd.pedido);
       clearOrder();
       toast("✅ Pedido cobrado correctamente");
   } else {
@@ -920,13 +1002,14 @@ async function confirmPay(){
 }
 
 /* === TICKET === */
-function showReceipt(items, total, efect, tarj, cambio, metodo, ts) {
+function showReceipt(items, total, efect, tarj, cambio, metodo, ts, pedido) {
     const totalNum = parseFloat(total) || 0;
     const baseImponible = totalNum / 1.10;
     const cuotaIva = totalNum - baseImponible;
 
     let h = '<div class="ticket-individual" style="padding-bottom: 20px;">';
-    h += '<div class="rc-center rc-bold" style="font-size:16px">POLLERÍA LAS PORTADAS</div>';
+    // Cambio de título
+    h += '<div class="rc-center rc-bold" style="font-size:16px">POLLERIA FREIDURIA LAS PORTADAS</div>';
     h += '<div class="rc-center">Av. las Portadas, 2</div>';
     h += '<div class="rc-center">41700 Dos Hermanas, Sevilla</div>';
     h += '<div class="rc-center">Tel: 623700918</div>';
@@ -934,6 +1017,8 @@ function showReceipt(items, total, efect, tarj, cambio, metodo, ts) {
     h += '<div class="rc-line"></div>';
     h += `<div class="rc-center">${esc(ts)}</div>`;
     h += '<div class="rc-line"></div>';
+    
+    // Eliminado el bloque de datos del cliente/pedido
     
     items.forEach(it => {
         let pu = parseFloat(it.precioUnit);
@@ -976,15 +1061,23 @@ function showReceipt(items, total, efect, tarj, cambio, metodo, ts) {
     document.getElementById("receipt-content").innerHTML = h;
     document.getElementById("receipt-overlay").classList.add("open");
 }
+
 function closeReceipt(){ document.getElementById("receipt-overlay").classList.remove("open"); }
 
 /* === IMPRIMIR COMANDA PARA COCINA === */
 function imprimirComanda() {
-  const ts = new Date().toLocaleString('es-ES');
   let h = '<div style="font-family: Arial; padding-bottom: 20px; color: #000;">';
   h += '<div class="rc-center rc-bold" style="font-size:20px; border-bottom:2px solid #000; margin-bottom:10px;">COMANDA COCINA</div>';
+  
   if(currentPedidoId) h += `<div class="rc-center rc-bold" style="font-size:16px;">PEDIDO #${currentPedidoId}</div>`;
-  h += `<div class="rc-center" style="margin-bottom:10px;">${ts}</div>`;
+  
+  // Leemos la hora de recogida y, si existe, la ponemos destacada
+  const horaRecogida = document.getElementById("input-espera-hora").value.trim();
+  if (horaRecogida) {
+    h += `<div class="rc-center rc-bold" style="font-size:18px; border: 2px dashed #000; padding: 6px; margin: 8px 0;">RECOGER: ${esc(horaRecogida)}</div>`;
+  } else {
+    h += `<div style="margin-bottom:10px;"></div>`;
+  }
   
   let ultimaCategoria = "";
 
@@ -1113,7 +1206,7 @@ function limpiarBusquedaPedidos() {
 
 function renderTablaPedidos() {
   const filtro = document.getElementById("input-buscar-pedido").value.toLowerCase().trim();
-  let html = '<table><tr><th>ID</th><th>Cliente</th><th>Total</th><th>Acciones</th></tr>';
+  let html = '<table><tr><th>ID</th><th>Cliente</th><th>Teléfono</th><th>Hora Recogida</th><th>Total</th><th>Acciones</th></tr>';
   
   const pedidosFiltrados = pedidosPendientesCache.filter(p => {
     const nom = (p.nombre_cliente || "").toLowerCase();
@@ -1122,14 +1215,20 @@ function renderTablaPedidos() {
   });
 
   if (pedidosFiltrados.length === 0) {
-    html += `<tr><td colspan="4" style="text-align:center; color:#64748b; padding: 20px;">
+    html += `<tr><td colspan="6" style="text-align:center; color:#64748b; padding: 20px;">
                ${filtro ? "No hay coincidencias con la búsqueda" : "No hay pedidos pendientes"}
              </td></tr>`;
   } else {
     pedidosFiltrados.forEach(p => {
-      const info = (p.nombre_cliente || p.telefono) ? `${esc(p.nombre_cliente)} ${p.telefono ? '('+esc(p.telefono)+')' : ''}` : 'Sin nombre';
+      const nombre = esc(p.nombre_cliente || "Sin nombre");
+      const telefono = p.telefono ? esc(p.telefono) : "—";
+      const hora = p.hora_recogida ? esc(p.hora_recogida) : "—";
       html += `<tr>
-        <td>#${p.id}</td><td>${info}</td><td>${p.total.toFixed(2)} €</td>
+        <td>#${p.id}</td>
+        <td>${nombre}</td>
+        <td>${telefono}</td>
+        <td>${hora}</td>
+        <td>${p.total.toFixed(2)} €</td>
         <td>
           <button class="btn-cargar-pedido" onclick="cargarPedido(${p.id})">Cargar</button>
           <button class="al-del" onclick="eliminarPedido(${p.id})" style="margin-left:8px;">🗑</button>
@@ -1152,6 +1251,7 @@ async function cargarPedido(id) {
     currentPedidoId = p.id;
     document.getElementById("input-espera-nombre").value = p.nombre_cliente || "";
     document.getElementById("input-espera-tel").value = p.telefono || "";
+    document.getElementById("input-espera-hora").value = p.hora_recogida || "";
     renderOrder();
     closePedidosModal();
     toast("📦 Pedido cargado. Listo para cobrar o editar.");
@@ -1173,6 +1273,7 @@ function abrirModalEspera() {
     document.getElementById("titulo-espera").textContent = "Guardar Nuevo Pedido";
     document.getElementById("input-espera-nombre").value = "";
     document.getElementById("input-espera-tel").value = "";
+    document.getElementById("input-espera-hora").value = "";
   }
   document.getElementById("form-espera-overlay").classList.add("open");
 }
@@ -1182,8 +1283,9 @@ function closeModalEspera() { document.getElementById("form-espera-overlay").cla
 async function guardarPedidoEspera() {
   const nombre = document.getElementById("input-espera-nombre").value.trim();
   const tel = document.getElementById("input-espera-tel").value.trim();
+  const hora = document.getElementById("input-espera-hora").value.trim();
   const payload = {
-    nombre_cliente: nombre, telefono: tel || "Sin teléfono", items: order, total: getTotal().toFixed(2)
+    nombre_cliente: nombre, telefono: tel || "Sin teléfono", items: order, total: getTotal().toFixed(2), hora_recogida: hora
   };
 
   if (currentPedidoId) {
@@ -1288,7 +1390,152 @@ window.addEventListener('keydown', function(e) {
 });
 
 /* === TOAST === */
-function toast(msg){ const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2200); }
+function toast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg; 
+  t.classList.add("show"); 
+  setTimeout(()=>t.classList.remove("show"),2200); 
+}
+
+/* === ESTADISTICAS AVANZADAS === */
+function localDateStr(d) {
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,'0') + "-" + String(d.getDate()).padStart(2,'0');
+}
+
+function openStats() {
+  const catSelect = document.getElementById("stat-f-cat");
+  catSelect.innerHTML = '<option value="Todas">Todas</option>' + getParentCats().map(c => `<option value="${c}">${c}</option>`).join("");
+  updateStatProdFilter();
+  setStatRango(0, 'hoy'); 
+  document.getElementById("stats-overlay").classList.add("open");
+}
+
+function closeStats() { document.getElementById("stats-overlay").classList.remove("open"); }
+
+function updateStatProdFilter() {
+  const pSelect = document.getElementById("stat-f-prod");
+  const cat = document.getElementById("stat-f-cat").value;
+  let prods = productos;
+  if (cat !== "Todas") prods = productos.filter(p => p.categoria.split('/')[0].trim() === cat);
+  pSelect.innerHTML = '<option value="Todos">Todos</option>' + [...new Set(prods.map(p => p.nombre))].sort().map(n => `<option value="${n}">${esc(n)}</option>`).join("");
+}
+
+function setStatRango(dias, btnId) {
+  document.querySelectorAll(".stat-btn").forEach(b => b.classList.remove("active"));
+  if(btnId) document.getElementById("btn-st-" + btnId).classList.add("active");
+  
+  const hoy = new Date();
+  const hasta = localDateStr(hoy);
+  let desde = new Date();
+  
+  if (dias === 9999) desde = new Date('2000-01-01');
+  else desde.setDate(hoy.getDate() - dias);
+  
+  document.getElementById("stat-desde").value = localDateStr(desde);
+  document.getElementById("stat-hasta").value = hasta;
+  runStats();
+}
+
+function customStatDate() {
+  document.querySelectorAll(".stat-btn").forEach(b => b.classList.remove("active"));
+  runStats();
+}
+
+async function runStats() {
+  const desde = document.getElementById("stat-desde").value;
+  const hasta = document.getElementById("stat-hasta").value;
+  const fCat = document.getElementById("stat-f-cat").value;
+  const fProd = document.getElementById("stat-f-prod").value;
+  const agrupar = document.getElementById("stat-group").value;
+  const showQty = document.getElementById("stat-show-qty").checked;
+  const showRev = document.getElementById("stat-show-rev").checked;
+
+  document.getElementById("stats-list").innerHTML = '<div style="text-align:center; padding:20px; font-weight:bold;">⏳ Analizando base de datos...</div>';
+
+  const r = await fetch(`/api/estadisticas?desde=${desde}&hasta=${hasta}`);
+  const ventas = await r.json();
+
+  let data = {};
+  let totalGlobalQty = 0;
+  let totalGlobalRev = 0;
+
+  ventas.forEach(v => {
+    (v.items || []).forEach(it => {
+      let cat = "VARIOS";
+      const pRef = productos.find(p => p.nombre === it.nombre);
+      if (pRef && pRef.categoria) cat = pRef.categoria.split('/')[0].trim().toUpperCase();
+
+      if (fCat !== "Todas" && cat !== fCat.toUpperCase()) return;
+      if (fProd !== "Todos" && it.nombre !== fProd) return;
+
+      let pu = parseFloat(it.precioUnit);
+      if(isNaN(pu)) pu = getSafeItemPrice(it);
+      
+      const qty = parseInt(it.qty) || 1;
+      const rev = pu * qty;
+
+      let key1;
+      if (agrupar === 'cat') key1 = cat;
+      else if (agrupar === 'prod') key1 = it.nombre;
+      else key1 = cat; // Para agrupar por ambos
+
+      if (!data[key1]) data[key1] = { qty: 0, rev: 0, subs: {} };
+      data[key1].qty += qty;
+      data[key1].rev += rev;
+      totalGlobalQty += qty;
+      totalGlobalRev += rev;
+
+      if (agrupar === 'cat_prod') {
+        if (!data[key1].subs[it.nombre]) data[key1].subs[it.nombre] = { qty: 0, rev: 0 };
+        data[key1].subs[it.nombre].qty += qty;
+        data[key1].subs[it.nombre].rev += rev;
+      }
+    });
+  });
+
+  if(Object.keys(data).length === 0) {
+    document.getElementById("stats-list").innerHTML = '<div style="text-align:center; padding:20px; color:#64748b;">No hay registros de ventas para estas fechas.</div>';
+    return;
+  }
+
+  let html = '<table><tr>';
+  if(agrupar === 'cat') html += '<th>Categoría</th>';
+  else if(agrupar === 'prod') html += '<th>Plato</th>';
+  else html += '<th>Categoría / Plato</th>';
+  
+  if(showQty) html += '<th style="text-align:right;">Unidades Vendidas</th>';
+  if(showRev) html += '<th style="text-align:right;">Facturado (€)</th>';
+  html += '</tr>';
+
+  const keys = Object.keys(data).sort();
+  keys.forEach(k => {
+    html += `<tr style="background:#f8fafc; font-weight:bold; font-size:16px;">
+      <td>${esc(k)}</td>
+      ${showQty ? `<td style="text-align:right;">${data[k].qty}</td>` : ''}
+      ${showRev ? `<td style="text-align:right; color:#16a34a;">${data[k].rev.toFixed(2)} €</td>` : ''}
+    </tr>`;
+
+    if (agrupar === 'cat_prod') {
+      // Ordenamos los platos dentro de la categoría del más vendido al menos vendido
+      const subs = Object.keys(data[k].subs).sort((a,b) => data[k].subs[b].qty - data[k].subs[a].qty); 
+      subs.forEach(subK => {
+         html += `<tr>
+          <td style="padding-left:30px; color:#475569;">↳ ${esc(subK)}</td>
+          ${showQty ? `<td style="text-align:right; color:#475569;">${data[k].subs[subK].qty}</td>` : ''}
+          ${showRev ? `<td style="text-align:right; color:#475569;">${data[k].subs[subK].rev.toFixed(2)} €</td>` : ''}
+        </tr>`;
+      });
+    }
+  });
+
+  html += `<tr style="background:#1e293b; color:#fff; font-weight:bold; font-size:18px;">
+      <td>TOTALES FILTRADOS</td>
+      ${showQty ? `<td style="text-align:right;">${totalGlobalQty}</td>` : ''}
+      ${showRev ? `<td style="text-align:right; color:#4ade80;">${totalGlobalRev.toFixed(2)} €</td>` : ''}
+    </tr></table>`;
+
+  document.getElementById("stats-list").innerHTML = html;
+}
 
 /* === INIT === */
 loadProducts();

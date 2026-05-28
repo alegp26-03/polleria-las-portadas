@@ -347,7 +347,7 @@ def leer_ventas_hoy():
 #  PEDIDOS PENDIENTES (TELEFONO) - NUEVO en v3
 # =============================================================================
 
-PEDIDOS_FIELDNAMES = ['id', 'telefono', 'nombre_cliente', 'items_json', 'total', 'timestamp', 'estado']
+PEDIDOS_FIELDNAMES = ['id', 'telefono', 'nombre_cliente', 'items_json', 'total', 'timestamp', 'hora_recogida', 'estado']
 
 
 def leer_pedidos():
@@ -392,6 +392,7 @@ def guardar_pedidos(pedidos):
             'items_json': items_json,
             'total': p.get('total', 0),
             'timestamp': p.get('timestamp', ''),
+            'hora_recogida': p.get('hora_recogida', ''),
             'estado': p.get('estado', 'pendiente')
         })
     exito = escritura_atomica(CSV_PEDIDOS, pedidos_csv, PEDIDOS_FIELDNAMES)
@@ -607,6 +608,8 @@ def api_crear_pedido():
         except (ValueError, TypeError):
             return jsonify({'error': 'Total no valido'}), 400
 
+        hora_recogida = str(data.get('hora_recogida', '')).strip()
+
         pedidos = leer_pedidos()
         nuevo = {
             'id': siguiente_id_pedido(pedidos),
@@ -616,12 +619,13 @@ def api_crear_pedido():
             'items': items,
             'total': total,
             'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'hora_recogida': hora_recogida,
             'estado': 'pendiente'
         }
         pedidos.append(nuevo)
 
         if guardar_pedidos(pedidos):
-            logger.info(f"Pedido #{nuevo['id']} creado: tel={telefono}, total={total}")
+            logger.info(f"Pedido #{nuevo['id']} creado: tel={telefono}, total={total}, hora={hora_recogida}")
             return jsonify({
                 'ok': True,
                 'pedido': {
@@ -631,6 +635,7 @@ def api_crear_pedido():
                     'items': nuevo['items'],
                     'total': nuevo['total'],
                     'timestamp': nuevo['timestamp'],
+                    'hora_recogida': nuevo['hora_recogida'],
                     'estado': nuevo['estado']
                 }
             }), 201
@@ -747,6 +752,7 @@ def api_cobrar_pedido(pid):
                 'nombre_cliente': pedido.get('nombre_cliente', ''),
                 'items': pedido.get('items', []),
                 'total': pedido['total'],
+                'hora_recogida': pedido.get('hora_recogida', ''),
                 'estado': 'recogido'
             }
         }), 200
@@ -801,6 +807,8 @@ def api_update_pedido(pid):
                     p['items_json'] = json.dumps(data['items'], ensure_ascii=False)
                 if 'total' in data:
                     p['total'] = float(data['total'])
+                if 'hora_recogida' in data:
+                    p['hora_recogida'] = str(data['hora_recogida']).strip()
                 
                 pedido_actualizado = p
                 break
@@ -910,6 +918,40 @@ def arranque_seguro():
 
     print(f'  [OK] Log de errores: {LOG_FILE}')
     print('')
+    
+def leer_ventas_rango(desde, hasta):
+    """Lee las ventas entre dos fechas (YYYY-MM-DD)."""
+    ventas = []
+    try:
+        if not os.path.exists(CSV_VENTAS) or os.path.getsize(CSV_VENTAS) == 0:
+            return ventas
+        with open(CSV_VENTAS, newline='', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                try:
+                    ts = row.get('timestamp', '')[:10] # Extrae solo la fecha YYYY-MM-DD
+                    if desde <= ts <= hasta:
+                        try:
+                            row['items'] = json.loads(row.get('items_json', '[]'))
+                        except:
+                            row['items'] = []
+                        row.pop('items_json', None)
+                        ventas.append(row)
+                except Exception as e:
+                    continue
+    except Exception as e:
+        logger.error(f"ERROR leyendo ventas rango: {e}")
+    return ventas
+
+@app.route('/api/estadisticas', methods=['GET'])
+def api_get_estadisticas():
+    desde = request.args.get('desde', '2000-01-01')
+    hasta = request.args.get('hasta', '2099-12-31')
+    try:
+        return jsonify(leer_ventas_rango(desde, hasta))
+    except Exception as e:
+        logger.error(f"ERROR en GET /api/estadisticas: {e}")
+        return jsonify({'error': 'Error interno'}), 500
 
 
 # =============================================================================
