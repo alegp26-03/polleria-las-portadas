@@ -746,6 +746,27 @@ def _negar_importe(valor):
     return f"{v:.2f}" if abs(v) >= 0.005 else "0.00"
 
 
+def ventas_anuladas(ventas, ts):
+    """Posiciones (0, 1, ...) de las ventas con timestamp `ts` que ya estan anuladas.
+    'anula_a' guarda el timestamp, con '#n' cuando no es la primera venta de ese segundo.
+    Las anulaciones antiguas sin '#n' cuentan por orden."""
+    anuladas, antiguas = set(), 0
+    for v in ventas:
+        ref = v.get('anula_a') or ''
+        if v.get('metodo_pago') != 'anulacion' or ref.split('#')[0] != ts:
+            continue
+        if '#' in ref:
+            anuladas.add(_a_int(ref.split('#', 1)[1], -1))
+        else:
+            antiguas += 1
+    libre = 0
+    for _ in range(antiguas):
+        while libre in anuladas:
+            libre += 1
+        anuladas.add(libre)
+    return anuladas
+
+
 @app.route('/api/venta/anular', methods=['POST'])
 def api_anular_venta():
     """Anula una venta de hoy registrando una venta en negativo que la compensa."""
@@ -762,11 +783,21 @@ def api_anular_venta():
                       if v.get('timestamp') == ts and v.get('metodo_pago') != 'anulacion']
         if not originales:
             return jsonify({'error': 'Venta no encontrada (solo se pueden anular ventas de hoy)'}), 404
-        # Si hubo varias ventas en el mismo segundo, se anulan por orden
-        ya_anuladas = sum(1 for v in ventas if v.get('anula_a') == ts)
-        if ya_anuladas >= len(originales):
-            return jsonify({'error': 'Esta venta ya esta anulada'}), 409
-        original = originales[ya_anuladas]
+
+        # Si hubo varias ventas en el mismo segundo, 'ocurrencia' dice cual (0 = la primera)
+        anuladas = ventas_anuladas(ventas, ts)
+        if data.get('ocurrencia') is None:
+            libres = [i for i in range(len(originales)) if i not in anuladas]
+            if not libres:
+                return jsonify({'error': 'Esta venta ya esta anulada'}), 409
+            posicion = libres[0]
+        else:
+            posicion = _a_int(data.get('ocurrencia'), -1)
+            if not 0 <= posicion < len(originales):
+                return jsonify({'error': 'Venta no encontrada'}), 404
+            if posicion in anuladas:
+                return jsonify({'error': 'Esta venta ya esta anulada'}), 409
+        original = originales[posicion]
 
         anulacion = {
             'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
@@ -776,7 +807,7 @@ def api_anular_venta():
             'pagado_tarjeta': _negar_importe(original.get('pagado_tarjeta')),
             'cambio': _negar_importe(original.get('cambio')),
             'metodo_pago': 'anulacion',
-            'anula_a': ts
+            'anula_a': ts if posicion == 0 else f"{ts}#{posicion}"
         }
         if not registrar_venta(anulacion):
             return jsonify({'error': 'Error al registrar la anulacion'}), 500
@@ -1240,7 +1271,7 @@ def generar_ticket_venta(venta, config):
     doc.separador()
     if metodo == 'anulacion':
         doc.texto('ANULACION DE VENTA', 'centro', negrita=True, tamano='alto')
-        doc.texto(f"Venta original: {venta.get('anula_a', '')}", 'centro')
+        doc.texto(f"Venta original: {(venta.get('anula_a') or '').split('#')[0]}", 'centro')
     doc.texto(venta.get('timestamp', ''), 'centro')
     doc.separador()
 

@@ -63,9 +63,9 @@ def pruebas_impresora():
 
 @app.route('/__pruebas/ventas_mismo_segundo', methods=['POST'])
 def pruebas_ventas_mismo_segundo():
-    """Registra dos ventas en efectivo con el mismo timestamp."""
+    """Registra tres ventas en efectivo con el mismo timestamp."""
     ts = tpv.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    for nombre in ('Venta gemela A', 'Venta gemela B'):
+    for nombre in ('Venta gemela A', 'Venta gemela B', 'Venta gemela C'):
         tpv.registrar_venta({'timestamp': ts, 'total': '3.00', 'pagado_efectivo': '3.00', 'pagado_tarjeta': '0.00',
                              'cambio': '0.00', 'metodo_pago': 'efectivo',
                              'items': [{'nombre': nombre, 'qty': 1, 'precioUnit': 3.0}]})

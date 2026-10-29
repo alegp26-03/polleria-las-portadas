@@ -168,7 +168,7 @@ async function main() {
     await pulsarId('btn-cobrar');
     await pulsar('20 €', '#pay-overlay');
     comprobar((await textoDe('pay-cash-ef')) === '20', 'el botón de 20 € no pone el importe');
-    comprobar((await textoDe('pay-change-ef')).includes('+9.00'), 'cambio incorrecto: ' + await textoDe('pay-change-ef'));
+    comprobar((await textoDe('pay-change-ef')).includes('+9,00 €'), 'cambio incorrecto: ' + await textoDe('pay-change-ef'));
     await captura('1_cobro_efectivo');
     await pulsarId('btn-pay-confirm');
     await esperar(() => abierto('receipt-overlay'), 'ticket en pantalla');
@@ -185,8 +185,8 @@ async function main() {
     await pulsarProducto('Medio pollo frito');
     await pulsarId('btn-cobrar');
     await pulsar('Exacto', '#pay-overlay');
-    comprobar((await textoDe('pay-cash-ef')) === '17.50', 'importe exacto incorrecto: ' + await textoDe('pay-cash-ef'));
-    comprobar((await textoDe('pay-change-ef')).includes('+0.00'), 'cambio distinto de 0');
+    comprobar((await textoDe('pay-cash-ef')) === '17,50', 'importe exacto incorrecto: ' + await textoDe('pay-cash-ef'));
+    comprobar((await textoDe('pay-change-ef')).includes('0,00 €'), 'cambio distinto de 0');
     comprobar(!(await js(`document.getElementById('btn-pay-confirm').disabled`)), 'no deja confirmar');
   });
 
@@ -207,7 +207,7 @@ async function main() {
     await pulsarId('btn-cobrar');
     await pulsar('Mixto', '#pay-overlay .pay-tabs');
     await pulsar('5', '#pay-np-mx', true);
-    comprobar((await textoDe('pay-card-mx')).includes('6.00'), 'parte de tarjeta incorrecta');
+    comprobar((await textoDe('pay-card-mx')).includes('6,00 €'), 'parte de tarjeta incorrecta');
     await pulsarId('btn-pay-confirm');
     const [t] = await nuevosTrabajos(antes, 1);
     comprobar(t.abre_cajon, 'no se ha abierto el cajón en el pago mixto');
@@ -324,15 +324,17 @@ async function main() {
     await pulsar('Ventas', '#topbar');
     await esperar(() => abierto('ventas-overlay'), 'ventana de ventas');
     const resumenAntes = await js(`document.querySelector('#ventas-summary .vs-val').textContent`);
-    const dialogosAntes = dialogos.length;
     await pulsar('Anular', '#ventas-list');
+    await esperar(() => abierto('confirm-overlay'), 'confirmación de anulación');
+    comprobar((await textoDe('confirm-detalle')).includes('Se abrirá el cajón'), 'la confirmación no avisa del cajón');
+    await captura('4a_confirmar_anulacion');
+    await pulsar('Sí, anular', '#confirm-overlay');
     await esperarToast('Venta anulada');
-    comprobar(dialogos.length === dialogosAntes + 1 && dialogos.at(-1).includes('Se abrirá el cajón'), 'no se ha pedido confirmación');
     const [t] = await nuevosTrabajos(antes, 1);
     comprobar(t.abre_cajon, 'no se abre el cajón para devolver el dinero');
     comprobar(t.texto.includes('ANULACION DE VENTA') && t.texto.includes('Devuelto en efectivo'), 'ticket de anulación incorrecto');
-    await esperar(async () => (await textoDe('ventas-list')).includes('(ANULADA)'), 'venta marcada como anulada');
-    comprobar((await textoDe('ventas-list')).includes('anulación'), 'no aparece la fila de anulación');
+    await esperar(async () => (await textoDe('ventas-list')).includes('ANULADA'), 'venta marcada como anulada');
+    comprobar((await textoDe('ventas-list')).includes('Anulación de la venta'), 'no aparece la fila de anulación');
     const resumenDespues = await js(`document.querySelector('#ventas-summary .vs-val').textContent`);
     comprobar(Number(resumenDespues) === Number(resumenAntes) - 1, `el contador de ventas no baja (${resumenAntes} -> ${resumenDespues})`);
     await captura('4_ventas_anulada');
@@ -342,14 +344,19 @@ async function main() {
     const { timestamp } = await api('/__pruebas/ventas_mismo_segundo', {});
     await pulsar('Ventas', '#topbar');
     await esperar(() => abierto('ventas-overlay'), 'ventana de ventas');
-    const indice = await js(`ventasCache.findIndex(v => v.timestamp === ${JSON.stringify(timestamp)})`);
-    await js(`anularVenta(${indice})`);
+    // Se anula la venta del medio (B): debe quedar anulada exactamente esa
+    const indice = await js(`ventasCache.findIndex(v => v.items.some(it => it.nombre === 'Venta gemela B'))`);
+    await js(`anularVenta(${indice}); true`);
+    await esperar(() => abierto('confirm-overlay'), 'confirmación de anulación');
+    await pulsar('Sí, anular', '#confirm-overlay');
     await esperarToast('Venta anulada');
-    await esperar(async () => (await js(`ventasCache.filter(v => v.anula_a === ${JSON.stringify(timestamp)}).length`)) === 1, 'lista actualizada');
-    const filas = await js(`[...document.querySelectorAll('#ventas-list tr')].map(tr => tr.textContent).filter(t => t.includes('Venta gemela') && !t.includes('anulación'))`);
-    comprobar(filas.length === 2, 'no aparecen las dos ventas');
-    comprobar(filas.filter(t => t.includes('(ANULADA)')).length === 1, 'se marcan como anuladas ' + filas.filter(t => t.includes('(ANULADA)')).length + ' ventas');
-    comprobar(filas.filter(t => t.includes('Anular')).length === 1, 'la otra venta no se puede anular');
+    await esperar(async () => (await js(`ventasCache.filter(v => (v.anula_a || '').startsWith(${JSON.stringify(timestamp)})).length`)) === 1, 'lista actualizada');
+    const filas = await js(`Object.fromEntries([...document.querySelectorAll('#ventas-list tr')].map(tr => tr.textContent)
+      .filter(t => t.includes('Venta gemela') && !t.includes('Anulación')).map(t => [t.match(/Venta gemela ./)[0], t.includes('ANULADA')]))`);
+    comprobar(JSON.stringify(filas) === JSON.stringify({'Venta gemela A': false, 'Venta gemela B': true, 'Venta gemela C': false}),
+      'ventas anuladas: ' + JSON.stringify(filas));
+    const filaAnulacion = await js(`[...document.querySelectorAll('#ventas-list tr')].map(tr => tr.textContent).find(t => t.includes('Anulación de la venta de las ${timestamp.split(' ')[1]}'))`);
+    comprobar(filaAnulacion && !filaAnulacion.includes('#'), 'la fila de anulación muestra la referencia interna: ' + filaAnulacion);
   });
 
   await prueba('Ver el ticket de una anulación', async () => {
@@ -371,9 +378,9 @@ async function main() {
 
     await pulsar('Salida de dinero', '#mov-overlay');
     await pulsarId('mov-importe');
-    for (const tecla of ['1', '2', '.', '5']) await pulsar(tecla, '#numpad-overlay', true);
+    for (const tecla of ['1', '2', ',', '5']) await pulsar(tecla, '#numpad-overlay', true);
     await pulsar('Aceptar', '#numpad-overlay');
-    comprobar((await js(`document.getElementById('mov-importe').value`)) === '12.50', 'importe mal introducido');
+    comprobar((await js(`document.getElementById('mov-importe').value`)) === '12,50', 'importe mal introducido');
     await pulsarId('mov-concepto');
     for (const tecla of ['h', 'i', 'e', 'l', 'o']) await pulsar(tecla, '#vkb-overlay', true);
     await pulsar('Aceptar', '#vkb-overlay');
@@ -383,8 +390,8 @@ async function main() {
     const [t] = await nuevosTrabajos(antes, 1);
     comprobar(t.solo_cajon, 'no se ha abierto el cajón');
     await esperar(async () => (await textoDe('mov-list')).includes('hielo'), 'movimiento en la lista');
-    comprobar((await textoDe('mov-list')).includes('-12.50 €'), 'importe de la lista incorrecto');
-    comprobar((await textoDe('mov-resumen')).includes('12.50 €'), 'resumen de salidas incorrecto');
+    comprobar((await textoDe('mov-list')).includes('−12,50 €'), 'importe de la lista incorrecto');
+    comprobar((await textoDe('mov-resumen')).includes('12,50 €'), 'resumen de salidas incorrecto');
     comprobar((await js(`document.getElementById('mov-importe').value`)) === '', 'el formulario no se ha limpiado');
   });
 
@@ -398,11 +405,15 @@ async function main() {
     const ventas = await api('/api/ventas');
     const efectivo = ventas.reduce((s, v) => s + (parseFloat(v.pagado_efectivo) - parseFloat(v.cambio)), 0);
     const esperado = (50 + efectivo - 12.5).toFixed(2) + ' €';
-    comprobar((await textoDe('c-salidas')) === '12.50 €', 'salidas en el cierre: ' + await textoDe('c-salidas'));
-    comprobar((await textoDe('c-teorico')) === esperado, `teórico ${await textoDe('c-teorico')} en vez de ${esperado}`);
+    const esperadoPantalla = esperado.replace('.', ',');
+    comprobar((await textoDe('c-salidas')) === '12,50 €', 'salidas en el cierre: ' + await textoDe('c-salidas'));
+    comprobar((await textoDe('c-teorico')) === esperadoPantalla, `teórico ${await textoDe('c-teorico')} en vez de ${esperadoPantalla}`);
     await js(`document.getElementById('c-20').value = 2; calcCierre();`);
     await captura('6_cierre');
-    await pulsar('Guardar Cierre', '#cierre-overlay');
+    comprobar((await textoDe('c-real')) === '40,00 €', 'total contado incorrecto: ' + await textoDe('c-real'));
+    await pulsar('Guardar e imprimir', '#cierre-overlay');
+    await esperar(() => abierto('confirm-overlay'), 'confirmación del cierre');
+    await pulsar('Sí, guardar', '#confirm-overlay');
     await esperarToast('Cierre de caja guardado');
     const t = (await nuevosTrabajos(antes, 2))[1];
     for (const s of ['CIERRE DE CAJA', '- Salidas de caja', '12.50 €', 'hielo', '2 x 20 EUR', '40.00 €', 'Teorico en caja', esperado])
@@ -441,6 +452,86 @@ async function main() {
     }
   });
 
+  await prueba('Cancelar la confirmación de anular no hace nada', async () => {
+    const antes = (await trabajos()).length;
+    const ventasAntes = (await api('/api/ventas')).length;
+    await pulsar('Ventas', '#topbar');
+    await esperar(() => abierto('ventas-overlay'), 'ventana de ventas');
+    await pulsar('Anular', '#ventas-list');
+    await esperar(() => abierto('confirm-overlay'), 'confirmación');
+    await pulsar('No, volver', '#confirm-overlay');
+    await sleep(400);
+    comprobar(!(await abierto('confirm-overlay')), 'la confirmación sigue abierta');
+    comprobar((await api('/api/ventas')).length === ventasAntes, 'se ha anulado igualmente');
+    comprobar((await trabajos()).length === antes, 'se ha abierto el cajón o impreso algo');
+  });
+
+  await prueba('Eliminar un pedido en espera pide confirmación', async () => {
+    const { pedido } = await api('/api/pedido', {
+      telefono: '600333444', nombre_cliente: 'Prueba borrar', total: '6.50',
+      items: [{ id: 1, nombre: 'Medio pollo asado', precioBase: 6.5, qty: 1, removals: [], extras: [], notes: '' }]
+    });
+    await pulsar('Pedidos', '#topbar');
+    await esperar(async () => (await textoDe('pedidos-list')).includes('Prueba borrar'), 'pedido en la lista');
+    comprobar((await textoDe('pedidos-contador')).includes('pendiente'), 'no aparece el contador de pendientes');
+    await js(`document.querySelector('[aria-label="Eliminar pedido ${pedido.id}"]').click()`);
+    await esperar(() => abierto('confirm-overlay'), 'confirmación de borrado');
+    comprobar((await textoDe('confirm-mensaje')).includes('Prueba borrar'), 'la confirmación no dice qué pedido es');
+    await pulsar('Sí, eliminar', '#confirm-overlay');
+    await esperar(async () => !(await api('/api/pedidos')).some(p => p.id === pedido.id), 'pedido eliminado');
+  });
+
+  await prueba('El pedido muestra el número de artículos y el total con coma', async () => {
+    await pulsarProducto('Pollo asado');
+    await pulsarProducto('Pollo asado');
+    await pulsarProducto('Medio pollo asado');
+    // Los botones principales se ven con su color (texto blanco sobre rojo / negro)
+    const colores = await js(`['btn-cobrar', 'btn-comanda'].map(id => {
+      const c = getComputedStyle(document.getElementById(id));
+      return id + ':' + c.backgroundColor + '/' + c.color;
+    })`);
+    comprobar(colores[0] === 'btn-cobrar:rgb(200, 16, 46)/rgb(255, 255, 255)', 'botón Cobrar: ' + colores[0]);
+    comprobar(colores[1] === 'btn-comanda:rgb(26, 26, 26)/rgb(255, 255, 255)', 'botón Comanda: ' + colores[1]);
+    comprobar((await textoDe('order-count')) === '3 artículos', 'contador: ' + await textoDe('order-count'));
+    comprobar((await textoDe('order-total-val')) === '28,50 €', 'total: ' + await textoDe('order-total-val'));
+  });
+
+  if (CAPTURAS) {
+    await prueba('Capturas de todas las pantallas (1366x768)', async () => {
+      await cdp('Emulation.setDeviceMetricsOverride', { width: 1366, height: 768, deviceScaleFactor: 1, mobile: false });
+      const cerrar = () => js(`document.querySelectorAll('.modal-overlay.open, .vkb-overlay.open').forEach(o => o.classList.remove('open'))`);
+      await js(`clearOrder()`);
+      await pulsarProducto('Pollo asado');
+      await pulsarProducto('Serranito'); await pulsarProducto('Serranito');
+      await js(`order[1].removals = ['Sin tomate']; renderOrder();`);
+      await pulsarProducto('Lagrimitas');
+      await sleep(300); await captura('p01_principal');
+      await pulsarId('btn-cobrar'); await pulsar('50 €', '#pay-overlay'); await sleep(200); await captura('p02_cobro_efectivo');
+      await pulsar('Tarjeta', '#pay-overlay .pay-tabs'); await sleep(200); await captura('p03_cobro_tarjeta');
+      await pulsar('Mixto', '#pay-overlay .pay-tabs'); await pulsar('2', '#pay-np-mx', true); await pulsar('0', '#pay-np-mx', true); await sleep(200); await captura('p04_cobro_mixto');
+      await cerrar();
+      await js(`showReceipt(order.map(x => ({...x, precioUnit: getSafeItemPrice(x)})), getTotal(), 50, 0, 50 - getTotal(), 'efectivo', '2026-10-29 13:42:07')`);
+      await sleep(200); await captura('p05_ticket'); await cerrar();
+      await js(`openEdit(1)`); await sleep(200); await captura('p06_editar'); await cerrar();
+      await js(`openNumpad('Precio del producto extra', () => {})`); await pulsar('4', '#numpad-overlay', true); await pulsar(',', '#numpad-overlay', true); await pulsar('5', '#numpad-overlay', true);
+      await sleep(200); await captura('p07_teclado_numerico'); await cerrar();
+      await js(`openMovimientos()`); await sleep(400); await pulsarId('mov-concepto'); await pulsar('h', '#vkb-overlay', true);
+      await sleep(200); await captura('p08_teclado_virtual'); await cerrar();
+      await js(`openPedidosModal()`); await sleep(500); await captura('p09_pedidos'); await cerrar();
+      await js(`abrirModalEspera()`); await sleep(300); await captura('p10_guardar_pedido'); await cerrar();
+      await js(`openVentas()`); await sleep(500); await captura('p11_ventas'); await cerrar();
+      await js(`openStats()`); await sleep(800); await captura('p12_estadisticas'); await cerrar();
+      await js(`openCierre()`); await sleep(600); await js(`document.getElementById('c-50').value = 1; document.getElementById('c-5').value = 3; calcCierre();`);
+      await captura('p13_cierre'); await cerrar();
+      await js(`openMovimientos()`); await sleep(500); await captura('p14_entradas_salidas'); await cerrar();
+      await js(`openAdmin()`); await sleep(300); await captura('p15_gestion'); await cerrar();
+      await js(`confirmar({titulo: '¿Anular esta venta?', mensaje: 'Venta de las 13:42 por 33,00 €.', detalle: 'Se abrirá el cajón para devolver 33,00 € en efectivo.', si: 'Sí, anular'}); true`);
+      await sleep(200); await captura('p16_confirmacion'); await js(`responderConfirmacion(false)`);
+      await js(`toast('⚠️ Venta registrada · Impresora sin papel', 5000)`); await sleep(400); await captura('p17_aviso');
+      await js(`clearOrder()`);
+    });
+  }
+
   for (const [ancho, alto] of [[1024, 768], [1366, 768]]) {
     await prueba(`En ${ancho}x${alto} los botones del cobro se ven sin desplazar la ventana`, async () => {
       await cdp('Emulation.setDeviceMetricsOverride', { width: ancho, height: alto, deviceScaleFactor: 1, mobile: false });
@@ -474,7 +565,12 @@ async function main() {
     });
   }
 
-  comprobar(true);
+  if (dialogos.length) {
+    resultados.push(false);
+    console.log('  FALLO  Han aparecido ventanas del navegador (confirm/alert): ' + dialogos.join(' | '));
+  } else {
+    console.log('  OK     No aparece ninguna ventana gris del navegador');
+  }
   if (erroresJS.length) {
     resultados.push(false);
     console.log('  FALLO  Errores de JavaScript en la página:\n         ' + erroresJS.join('\n         '));

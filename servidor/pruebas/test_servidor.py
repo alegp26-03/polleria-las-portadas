@@ -391,6 +391,39 @@ class TestAnulaciones(PruebaTPV):
         self.assertEqual(self.cliente.post('/api/venta/anular', json={'timestamp': ts}).status_code, 201)
         self.assertEqual(self.cliente.post('/api/venta/anular', json={'timestamp': ts}).status_code, 409)
 
+    def test_anular_una_venta_concreta_entre_varias_del_mismo_segundo(self):
+        ts = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        for nombre in ('A', 'B', 'C'):
+            tpv.registrar_venta(dict(self.venta(items=[{'nombre': nombre, 'qty': 1, 'precioUnit': 1}], total='1.00'),
+                                     timestamp=ts))
+        anular = lambda **extra: self.cliente.post('/api/venta/anular', json=dict(timestamp=ts, **extra))
+
+        respuesta = anular(ocurrencia=1)
+        self.assertEqual(respuesta.status_code, 201)
+        anulacion = respuesta.get_json()['anulacion']
+        self.assertEqual(anulacion['anula_a'], f'{ts}#1')
+        self.assertEqual(anulacion['items'][0]['nombre'], 'B', 'se ha anulado una venta distinta a la elegida')
+        self.assertNotIn('#', '\n'.join(texto_impreso(self.impresora.trabajos[-1]['datos'])),
+                         'el ticket muestra la referencia interna')
+
+        self.assertEqual(anular(ocurrencia=1).status_code, 409)
+        self.assertEqual(anular(ocurrencia=7).status_code, 404)
+        # Sin indicar cual, se anula la primera libre (A) y luego la C
+        self.assertEqual(anular().get_json()['anulacion']['items'][0]['nombre'], 'A')
+        self.assertEqual(anular().get_json()['anulacion']['items'][0]['nombre'], 'C')
+        self.assertEqual(anular().status_code, 409)
+
+    def test_anulaciones_antiguas_sin_posicion_siguen_contando(self):
+        ts = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        for _ in range(2):
+            tpv.registrar_venta(dict(self.venta(), timestamp=ts))
+        # Anulación guardada por una versión anterior (sin '#n'): corresponde a la primera venta
+        tpv.registrar_venta(dict(self.venta(total='-15.50'), metodo_pago='anulacion', anula_a=ts, timestamp=ts))
+        anular = lambda **extra: self.cliente.post('/api/venta/anular', json=dict(timestamp=ts, **extra))
+        self.assertEqual(anular(ocurrencia=0).status_code, 409)
+        self.assertEqual(anular(ocurrencia=1).status_code, 201)
+        self.assertEqual(anular().status_code, 409)
+
     def test_venta_inexistente_de_otro_dia_o_anulacion(self):
         self.assertEqual(self.cliente.post('/api/venta/anular', json={'timestamp': '2020-01-01 10:00:00'}).status_code, 404)
         self.assertEqual(self.cliente.post('/api/venta/anular', json={}).status_code, 400)

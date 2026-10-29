@@ -4,488 +4,545 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <title>TPV - Pollería Las Portadas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Inter:wght@400;600;700&display=swap">
 <style>
+/* =========================================================
+   TPV Pollería Las Portadas · estilo "Rojo clásico"
+   (mismo estilo que la web: Oswald + Inter, rojo, negro y franjas)
+   ========================================================= */
+:root{
+  --rojo:#C8102E; --rojo-osc:#8E0B20; --rojo-txt:#A30D25;
+  --tinta:#1A1A1A; --gris:#F6F6F6; --gris-2:#EFEFEF; --linea:#E2E2E2; --texto-2:#5A5A5A;
+  --verde:#166534; --verde-claro:#DCFCE7; --ambar-fondo:#FFF4D6; --ambar-txt:#7A4A00;
+  --display:"Oswald","Arial Narrow",Arial,sans-serif;
+  --cuerpo:"Inter","Segoe UI",Arial,sans-serif;
+  --rayas:repeating-linear-gradient(90deg,var(--rojo) 0 14px,#FFFFFF 14px 28px);
+}
+
 /* == RESET & BASE == */
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;font-family:'Segoe UI',Tahoma,Arial,sans-serif;overflow:hidden;background:#f0f2f5;
+html,body{height:100%;font-family:var(--cuerpo);overflow:hidden;background:var(--gris);color:var(--tinta);
   -webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
-button{cursor:pointer;border:none;outline:none;font-family:inherit;-webkit-tap-highlight-color:transparent}
+button{cursor:pointer;border:none;outline:none;font-family:inherit;color:inherit;background:none;-webkit-tap-highlight-color:transparent}
+button:disabled{cursor:default}
+input,select{font-family:inherit;color:var(--tinta)}
+.icono{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
 /* == SCROLLBARS TÁCTILES == */
-::-webkit-scrollbar { width: 48px; height: 48px; }
-::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 12px; }
-::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 12px; border: 4px solid #f1f5f9;}
-::-webkit-scrollbar-thumb:active { background: #64748b; }
+::-webkit-scrollbar{width:44px;height:44px}
+::-webkit-scrollbar-track{background:var(--gris-2);border-radius:12px}
+::-webkit-scrollbar-thumb{background:#9A9A9A;border-radius:12px;border:4px solid var(--gris-2)}
+::-webkit-scrollbar-thumb:active{background:#6B6B6B}
+
+/* == BOTONES COMUNES == */
+.btn{height:56px;padding:0 20px;border-radius:12px;border:2px solid var(--tinta);background:#FFFFFF;color:var(--tinta);
+  font-family:var(--display);font-size:19px;text-transform:uppercase;letter-spacing:.5px;transition:transform .1s}
+.btn:active{transform:scale(.97)}
+.btn-rojo{background:var(--rojo);border-color:var(--rojo);color:#FFFFFF;font-weight:700}
+.btn-rojo:disabled{background:#E7A0AC;border-color:#E7A0AC}
+.btn-negro{background:var(--tinta);color:#FFFFFF}
+.etq{font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--texto-2)}
 
 /* == LAYOUT == */
-#app{display:grid;grid-template-rows:56px 1fr;grid-template-columns:1fr 400px;height:100vh}
-#topbar{grid-column:1/3;background:#1e293b;color:#fff;display:flex;align-items:center;
-  padding:0 20px;gap:16px;font-size:18px;z-index:10}
-#topbar .title{font-weight:700;font-size:20px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#topbar button{white-space:nowrap}
-.printer-status{font-size:15px;padding:8px 10px;border-radius:8px;cursor:pointer;background:rgba(255,255,255,.1);white-space:nowrap}
-.printer-status::after{content:"";display:inline-block;width:11px;height:11px;border-radius:50%;margin-left:6px;background:#94a3b8;vertical-align:middle}
-.printer-status.ok::after{background:#22c55e}
-.printer-status.aviso::after{background:#f59e0b}
-.printer-status.error::after{background:#ef4444}
-/* Pantallas estrechas: botones más compactos y solo el icono del título */
-@media (max-width:1400px){
-  #topbar{gap:10px;padding:0 12px}
-  #topbar button{padding:8px 10px;font-size:14px}
-}
-@media (max-width:1300px){ #topbar .title-text{display:none} }
+#app{display:grid;grid-template-rows:62px 1fr;grid-template-columns:1fr 400px;height:100vh}
+#topbar{grid-column:1/3;position:relative;background:var(--tinta);color:#FFFFFF;display:flex;align-items:center;
+  padding:0 16px;gap:8px;z-index:10}
+#topbar::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:6px;
+  background:repeating-linear-gradient(90deg,var(--rojo) 0 16px,#FFFFFF 16px 32px)}
+#topbar .title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-family:var(--display);font-weight:700;font-size:22px;text-transform:uppercase;letter-spacing:.5px}
+#topbar .title-tpv{color:#FF8A9B;font-weight:500}
+#topbar .clock{font-family:var(--display);font-size:22px;font-variant-numeric:tabular-nums;margin-right:6px}
+#topbar button{display:inline-flex;align-items:center;gap:6px;height:42px;padding:0 12px;border-radius:8px;
+  background:rgba(255,255,255,.12);color:#FFFFFF;font-size:14px;font-weight:600;white-space:nowrap;transition:background .15s}
+#topbar button:active{background:rgba(255,255,255,.28)}
+#topbar .btn-cajon{background:var(--rojo)}
+#topbar .btn-cajon:active{background:var(--rojo-osc)}
+.printer-status{display:inline-flex;align-items:center;gap:6px;height:42px;padding:0 10px;border-radius:8px;
+  background:rgba(255,255,255,.12);cursor:pointer;white-space:nowrap}
+.printer-status::after{content:"";width:11px;height:11px;border-radius:50%;background:#9CA3AF}
+.printer-status.ok::after{background:#22C55E}
+.printer-status.aviso::after{background:#F59E0B}
+.printer-status.error::after{background:#EF4444}
 #topbar .lbl-corto{display:none}
-@media (max-width:1150px){
+@media (max-width:1300px){ #topbar .title-text{display:none} }
+@media (max-width:1180px){
+  #topbar{gap:6px;padding:0 8px}
+  #topbar button{padding:0 8px;font-size:13px}
+  #topbar .clock{font-size:18px;margin-right:0}
   #topbar .lbl-largo{display:none}
   #topbar .lbl-corto{display:inline}
-  #topbar{gap:6px;padding:0 8px}
-  #topbar button{padding:8px 7px;font-size:13px}
-  #topbar .clock{font-size:17px;margin-right:0}
-  .printer-status{padding:8px 6px}
+  .printer-status{padding:0 7px}
+  #left #cat-bar,#cat-bar #cat-tabs{gap:6px}
+  #cat-tabs .cat-tab{height:44px;padding:0 11px;font-size:15px}
 }
-#topbar .clock{font-size:20px;font-variant-numeric:tabular-nums;margin-right:8px}
-#topbar button{background:rgba(255,255,255,.15);color:#fff;border-radius:8px;padding:8px 14px;
-  font-size:15px;transition:.15s}
-#topbar button:active{background:rgba(255,255,255,.3)}
-#left{grid-column:1;grid-row:2;display:flex;flex-direction:column;overflow:hidden}
-#right{grid-column:2;grid-row:2;background:#fff;display:flex;flex-direction:column;
-  border-left:2px solid #e2e8f0;overflow:hidden}
+#left{grid-column:1;grid-row:2;display:flex;flex-direction:column;overflow:hidden;padding-top:6px}
+#right{grid-column:2;grid-row:2;background:#FFFFFF;display:flex;flex-direction:column;
+  border-left:2px solid var(--tinta);overflow:hidden;padding-top:6px}
 
-/* == CATEGORY TABS == */
-#cat-tabs{display:flex;gap:6px;padding:10px 12px 6px;background:#f8fafc;flex-wrap:wrap}
-.cat-tab{padding:10px 18px;border-radius:10px;font-size:15px;font-weight:600;
-  background:#e2e8f0;color:#475569;transition:.15s;min-height:48px}
-.cat-tab.active{background:#3b82f6;color:#fff}
+/* == CATEGORÍAS == */
+#cat-bar{display:flex;gap:8px;align-items:flex-start;padding:12px 14px 6px}
+#cat-tabs{display:flex;gap:8px;flex-wrap:wrap;flex:1}
+.cat-tab{height:46px;padding:0 16px;border-radius:10px;border:2px solid var(--tinta);background:#FFFFFF;
+  font-family:var(--display);font-size:16px;text-transform:uppercase;letter-spacing:.5px;transition:transform .1s}
+.cat-tab.active{background:var(--rojo);border-color:var(--rojo);color:#FFFFFF}
 .cat-tab:active{transform:scale(.95)}
+.btn-varios{height:46px;padding:0 16px;border-radius:10px;border:2px dashed var(--rojo);background:#FFFFFF;
+  color:var(--rojo);font-weight:700;font-size:15px;white-space:nowrap;flex:none}
+.btn-varios:active{background:#FBE7EA}
+#subcat-tabs{display:flex;gap:8px;padding:0 14px 6px;flex-wrap:wrap}
+#subcat-tabs:empty{display:none}
+.subcat-tab{height:42px;padding:0 16px;border-radius:999px;border:2px solid var(--tinta);background:#FFFFFF;
+  font-size:14px;font-weight:700}
+.subcat-tab.active{background:var(--tinta);color:#FFFFFF}
 
-/* == SUBCATEGORY TABS == */
-#subcat-tabs { display: flex; gap: 6px; padding: 0 12px 8px; background: #f8fafc; flex-wrap: wrap; }
-.subcat-tab { padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; background: #e2e8f0; color: #475569; transition: .15s; border: 1px solid #cbd5e1; }
-.subcat-tab.active { background: #0ea5e9; color: #fff; border-color: #0284c7; }
-.subcat-tab:active { transform: scale(.95); }
+/* == PRODUCTOS == */
+#prod-grid{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 14px 14px;
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));grid-auto-rows:116px;gap:10px;align-content:start}
+.prod-btn{position:relative;background:#FFFFFF;border:2px solid var(--tinta);border-radius:14px;overflow:hidden;
+  display:flex;flex-direction:column;justify-content:space-between;text-align:left;padding:18px 12px 10px;transition:transform .1s}
+.prod-btn::before{content:"";position:absolute;left:0;right:0;top:0;height:8px;background:var(--rayas);border-bottom:2px solid var(--tinta)}
+.prod-btn:active{transform:scale(.95);background:#FBE7EA}
+.prod-btn .pname{font-size:15px;font-weight:600;line-height:1.2;color:var(--tinta)}
+.prod-btn .pprice{font-family:var(--display);font-size:22px;font-weight:700;color:var(--rojo)}
 
-/* == PRODUCT GRID == */
-#prod-grid{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px;
-  display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;
-  align-content:start}
-.prod-btn{background:#fff;border:2px solid #e2e8f0;border-radius:14px;padding:14px 10px;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  min-height:110px;transition:.15s;gap:6px}
-.prod-btn:active{transform:scale(.95);border-color:#3b82f6;background:#eff6ff}
-.prod-btn .pname{font-size:15px;font-weight:600;text-align:center;color:#1e293b;line-height:1.2}
-.prod-btn .pprice{font-size:20px;font-weight:700;color:#16a34a}
+/* == PEDIDO (DERECHA) == */
+#order-header{padding:14px 16px 10px;display:flex;align-items:baseline;justify-content:space-between}
+#order-header h2{font-family:var(--display);font-size:24px;font-weight:700;text-transform:uppercase}
+#order-count{font-size:13px;font-weight:700;color:var(--rojo)}
+.pedido-loaded-banner{display:none;background:var(--ambar-fondo);color:var(--ambar-txt);font-size:13px;font-weight:700;
+  padding:8px 16px;border-top:1px solid #F1D9A0;border-bottom:1px solid #F1D9A0}
+#order-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;border-top:1px solid #EDEDED}
+.order-item{display:grid;grid-template-columns:1fr auto auto 40px;align-items:center;gap:8px;padding:10px 14px 10px 16px;border-bottom:1px solid #EDEDED}
+.oi-info{display:flex;flex-direction:column;gap:2px;cursor:pointer;min-width:0}
+.oi-name{font-size:15px;font-weight:700;text-decoration:underline dotted #B5B5B5;text-underline-offset:3px}
+.oi-mods{font-size:12px;color:#6B6B6B;line-height:1.3}
+.oi-qty{display:flex;align-items:center;gap:6px}
+.oi-qty button{width:40px;height:40px;border-radius:10px;font-size:22px;font-weight:700}
+.oi-minus{background:var(--gris-2)}
+.oi-plus{background:var(--tinta);color:#FFFFFF}
+.oi-qty button:active{transform:scale(.92)}
+.oi-qval{font-weight:700;min-width:20px;text-align:center}
+.oi-sub{font-family:var(--display);font-size:18px;font-weight:700;min-width:66px;text-align:right}
+.oi-del{width:40px;height:40px;border-radius:10px;background:var(--gris-2);display:flex;align-items:center;justify-content:center}
+.oi-del:active{background:var(--rojo);color:#FFFFFF}
+#order-empty{text-align:center;padding:48px 20px;color:#8A8A8A;font-size:16px}
+#order-footer{border-top:2px solid var(--tinta);padding:14px 16px 16px}
+#order-total{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+#order-total span{font-family:var(--display);font-size:22px;text-transform:uppercase}
+#order-total b{font-family:var(--display);font-size:40px;font-weight:700}
+#order-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#order-actions button{height:58px;border-radius:12px;border:2px solid var(--tinta);background:#FFFFFF;
+  font-family:var(--display);font-size:19px;text-transform:uppercase;letter-spacing:.5px;transition:transform .1s}
+#order-actions button:active:not(:disabled){transform:scale(.97)}
+#order-actions button:disabled{opacity:.4}
+#order-actions #btn-comanda{background:var(--tinta);color:#FFFFFF}
+#order-actions #btn-cobrar{background:var(--rojo);border-color:var(--rojo);color:#FFFFFF;font-size:22px;font-weight:700}
 
-/* == ORDER PANEL (RIGHT) == */
-#order-header{padding:14px 16px;background:#f1f5f9;font-size:18px;font-weight:700;
-  color:#1e293b;border-bottom:1px solid #e2e8f0;display:flex;align-items:center}
-#order-header span{flex:1}
-#order-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
-.order-item{display:grid;grid-template-columns:1fr auto auto auto;align-items:center;
-  padding:10px 14px;border-bottom:1px solid #f1f5f9;gap:8px}
-.order-item .oi-info{display:flex;flex-direction:column;gap:2px;cursor:pointer}
-.order-item .oi-name{font-size:15px;font-weight:600;color:#334155}
-.order-item .oi-mods{font-size:12px;color:#94a3b8;line-height:1.3}
-.order-item .oi-qty{display:flex;align-items:center;gap:4px}
-.order-item .oi-qty button{width:36px;height:36px;border-radius:8px;font-size:20px;font-weight:700}
-.oi-minus{background:#fee2e2;color:#dc2626}
-.oi-minus:active{background:#dc2626;color:#fff}
-.oi-plus{background:#dcfce7;color:#16a34a}
-.oi-plus:active{background:#16a34a;color:#fff}
-.oi-qval{font-size:17px;font-weight:700;min-width:28px;text-align:center}
-.order-item .oi-sub{font-size:16px;font-weight:700;color:#1e293b;min-width:68px;text-align:right}
-.order-item .oi-del{width:36px;height:36px;border-radius:8px;background:#fef2f2;color:#ef4444;
-  font-size:18px}
-.order-item .oi-del:active{background:#ef4444;color:#fff}
-#order-empty{text-align:center;padding:40px 20px;color:#94a3b8;font-size:16px}
-#order-footer{padding:14px 16px;border-top:2px solid #e2e8f0;background:#f8fafc}
-#order-total{font-size:28px;font-weight:800;color:#1e293b;text-align:right;margin-bottom:12px}
-#order-actions{display:flex;gap:10px}
-#order-actions button{flex:1;padding:16px;border-radius:12px;font-size:17px;font-weight:700;
-  min-height:56px;transition:.15s}
-#order-actions button:active{transform:scale(.97)}
-#btn-cobrar{background:#16a34a;color:#fff}
-#btn-cobrar:disabled{background:#86efac;color:#fff}
-#btn-limpiar{background:#ef4444;color:#fff}
-
-/* == MODALS == */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;
-  justify-content:center;align-items:center;z-index:100}
+/* == MODALES == */
+.modal-overlay{position:fixed;inset:0;background:rgba(17,17,17,.62);display:none;justify-content:center;align-items:center;z-index:100}
 .modal-overlay.open{display:flex}
-.modal{background:#fff;border-radius:20px;max-width:95vw;max-height:95vh;overflow-y:auto;
-  -webkit-overflow-scrolling:touch;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal{background:#FFFFFF;border:2px solid var(--tinta);border-radius:18px;max-width:96vw;max-height:96vh;overflow-y:auto;
+  -webkit-overflow-scrolling:touch;box-shadow:0 24px 60px rgba(0,0,0,.35)}
+.modal::before{content:"";display:block;height:10px;background:var(--rayas);border-bottom:2px solid var(--tinta);position:sticky;top:0;z-index:1}
+.modal-cuerpo{padding:20px 24px 22px;display:flex;flex-direction:column;gap:14px}
+.modal-tit{font-family:var(--display);font-size:30px;font-weight:700;text-transform:uppercase;line-height:1.1}
+.modal-acciones{display:grid;grid-template-columns:1fr 1.6fr;gap:10px}
+.campo label{display:block;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--texto-2);margin-bottom:6px}
+.campo input,.campo select{width:100%;height:56px;border:2px solid var(--tinta);border-radius:12px;padding:0 16px;font-size:19px;background:#FFFFFF}
+.campo input[readonly]{cursor:pointer}
+.campo input::placeholder{font-family:var(--cuerpo);font-size:17px;font-weight:400;color:#8A8A8A}
+.campo input:focus,.campo select:focus{outline:3px solid var(--rojo);outline-offset:1px}
+.tabla{width:100%;border-collapse:collapse;font-size:15px}
+.tabla th{background:var(--tinta);color:#FFFFFF;font-family:var(--display);font-weight:500;font-size:14px;text-transform:uppercase;
+  letter-spacing:.5px;text-align:left;padding:10px 12px;position:sticky;top:0;z-index:1}
+.tabla td{padding:8px 12px;border-bottom:1px solid #E6E6E6;vertical-align:middle}
+.lista{overflow-y:auto;-webkit-overflow-scrolling:touch}
+.btn-fila{height:44px;padding:0 16px;border-radius:10px;border:2px solid var(--tinta);background:#FFFFFF;font-weight:700;font-size:14px}
+.btn-fila-rojo{background:var(--rojo);border-color:var(--rojo);color:#FFFFFF}
+.btn-papelera{width:44px;height:44px;border-radius:10px;border:2px solid var(--linea);background:#FFFFFF;color:var(--rojo);
+  display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:6px}
+.btn-papelera:active{background:var(--rojo);color:#FFFFFF}
+.metodo{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:4px 8px;border-radius:6px;background:var(--gris-2)}
+.cajas{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.vs-box{border:2px solid var(--tinta);border-radius:14px;padding:12px 16px}
+.vs-box.negra{background:var(--tinta);color:#FFFFFF}
+.vs-val{font-family:var(--display);font-size:30px;font-weight:700;line-height:1.1}
+.vs-lbl{font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--texto-2)}
+.vs-box.negra .vs-lbl{color:#CFCFCF}
 
-/* == NUMPAD == */
-.numpad-modal { z-index: 150; }
-.numpad-modal .modal{width:340px;padding:20px}
-.numpad-title{font-size:16px;color:#64748b;text-align:center;margin-bottom:8px}
-.numpad-display{background:#f1f5f9;border-radius:12px;padding:16px;font-size:32px;
-  font-weight:700;text-align:right;margin-bottom:14px;min-height:60px;color:#1e293b;
-  word-break:break-all}
-.numpad-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.numpad-grid button{height:64px;border-radius:12px;font-size:24px;font-weight:700;
-  background:#f1f5f9;color:#1e293b;transition:.12s}
-.numpad-grid button:active{background:#cbd5e1}
-.numpad-grid .np-confirm{background:#16a34a;color:#fff}
-.numpad-grid .np-confirm:active{background:#15803d}
-.numpad-grid .np-clear{background:#fef2f2;color:#ef4444}
-.numpad-grid .np-back{background:#fef9c3;color:#a16207}
+/* == TECLADO NUMÉRICO == */
+.numpad-modal{z-index:150}
+.numpad-modal .modal{width:380px}
+.numpad-title{text-align:center}
+.pantalla{border:2px solid var(--tinta);border-radius:12px;padding:8px 16px;text-align:right;font-family:var(--display);
+  font-size:40px;font-weight:700;min-height:66px;word-break:break-all}
+.np{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.np button{height:62px;border-radius:12px;border:2px solid var(--linea);background:var(--gris);
+  font-family:var(--display);font-size:26px;font-weight:700;transition:background .1s}
+.np button:active{background:#D9D9D9}
+.np .np-clear{color:var(--rojo)}
+.numpad-modal .np button{height:68px}
 
-/* == PAYMENT MODAL == */
-.pay-modal .modal{width:460px;padding:18px 24px}
-.pay-total-label{font-size:16px;color:#64748b;text-align:center}
-.pay-total{font-size:36px;font-weight:800;text-align:center;color:#1e293b;margin:2px 0 10px}
-.pay-tabs{display:flex;gap:6px;margin-bottom:16px}
-.pay-tab{flex:1;padding:12px 6px;border-radius:10px;font-size:14px;font-weight:700;
-  background:#e2e8f0;color:#475569;text-align:center;min-height:48px;transition:.15s}
-.pay-tab.active{color:#fff}
-.pay-tab.tab-efectivo.active{background:#16a34a}
-.pay-tab.tab-tarjeta.active{background:#3b82f6}
-.pay-tab.tab-mixto.active{background:#f59e0b}
-.pay-tab:active{transform:scale(.97)}
+/* == COBRO (dos columnas) == */
+.pay-modal .modal{width:820px}
+.pay-cuerpo{display:grid;grid-template-columns:1fr 1fr;grid-template-areas:"cab teclado" "datos teclado" "acciones teclado";
+  grid-template-rows:auto 1fr auto;column-gap:28px;row-gap:14px;padding:22px 26px 24px;min-height:452px}
+.pay-cab{grid-area:cab;display:flex;flex-direction:column;gap:14px}
+.pay-total{font-family:var(--display);font-size:58px;font-weight:700;line-height:1}
+.pay-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pay-tab{height:50px;border-radius:12px;border:2px solid var(--tinta);background:#FFFFFF;font-family:var(--display);font-size:18px;text-transform:uppercase}
+.pay-tab.active{background:var(--tinta);color:#FFFFFF}
 .pay-section{display:none}
-.pay-section.active{display:block}
-.pay-field-label{font-size:14px;color:#64748b;margin-bottom:4px;margin-top:8px}
-.pay-cash-display{background:#fffbeb;border:2px solid #fcd34d;border-radius:12px;padding:14px;
-  font-size:26px;font-weight:700;text-align:right;margin-bottom:6px;min-height:50px;color:#92400e}
-.pay-card-display{background:#eff6ff;border:2px solid #93c5fd;border-radius:12px;padding:14px;
-  font-size:26px;font-weight:700;text-align:right;margin-bottom:6px;min-height:50px;color:#1e40af}
-.pay-change{font-size:20px;font-weight:700;text-align:center;margin:10px 0;padding:10px;border-radius:10px}
-.pay-change.positive{background:#dcfce7;color:#16a34a}
-.pay-change.negative{background:#fef2f2;color:#ef4444}
-.pay-change.zero{background:#f1f5f9;color:#64748b}
-.pay-quick{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:8px}
-.pay-quick button{height:44px;border-radius:10px;font-size:17px;font-weight:700;background:#dcfce7;color:#166534;transition:.12s}
-.pay-quick button:active{background:#86efac}
-.pay-tab.tab-entrada.active{background:#16a34a}
-.pay-tab.tab-salida.active{background:#ef4444}
-.pay-numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
-.pay-numpad button{height:50px;border-radius:10px;font-size:22px;font-weight:700;
-  background:#f1f5f9;color:#1e293b;transition:.12s}
-.pay-numpad button:active{background:#cbd5e1}
-.pay-numpad .np-clear{background:#fef2f2;color:#ef4444}
-.pay-numpad .np-back{background:#fef9c3;color:#a16207}
-.pay-card-info{text-align:center;padding:20px;font-size:18px;color:#475569}
-.pay-card-info .big-icon{font-size:60px;display:block;margin-bottom:10px}
-.pay-actions{display:flex;gap:10px;margin-top:12px}
-.pay-actions button{flex:1;padding:14px;border-radius:12px;font-size:16px;font-weight:700;min-height:54px}
-#btn-pay-confirm{background:#16a34a;color:#fff}
-#btn-pay-confirm:disabled{background:#86efac}
-#btn-pay-cancel{background:#ef4444;color:#fff}
+.pay-section.active{display:contents}
+.pay-datos{grid-area:datos;display:flex;flex-direction:column;gap:12px}
+.pay-teclado{grid-area:teclado;display:flex;flex-direction:column;gap:10px}
+.pay-acciones{grid-area:acciones;display:grid;grid-template-columns:1fr 1.6fr;gap:10px}
+#btn-pay-confirm{font-size:22px}
+.pay-quick{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.pay-quick button{height:50px;border-radius:12px;border:2px solid var(--tinta);background:#FFFFFF;font-family:var(--display);font-size:19px;font-weight:700}
+.pay-quick button:active{background:var(--gris-2)}
+.pay-quick .exacto{background:var(--tinta);color:#FFFFFF;font-size:15px}
+.pay-change{display:flex;justify-content:space-between;align-items:center;background:var(--tinta);color:#FFFFFF;border-radius:12px;padding:12px 18px}
+.pay-change span{font-family:var(--display);font-size:22px;text-transform:uppercase}
+.pay-change b{font-family:var(--display);font-size:38px;font-weight:700}
+.pay-change.positive b{color:#7EE2A0}
+.pay-change.negative b{color:#FF8A9B}
+.pay-card-display{border-style:dashed;color:var(--rojo)}
+.pay-card-info{border:2px dashed var(--tinta);border-radius:16px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center}
+.pay-card-info svg{width:96px;height:96px;fill:none;stroke:var(--rojo);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.pay-card-info strong{font-family:var(--display);font-size:52px;font-weight:700;line-height:1}
+.pay-nota{font-size:15px;line-height:1.45;color:#4A4A4A}
 
-/* == EDIT ITEM MODAL == */
-.edit-modal .modal{width:520px;max-width:98vw;padding:24px}
-.edit-title{font-size:20px;font-weight:800;color:#1e293b;margin-bottom:4px;text-align:center}
-.edit-base-price{font-size:14px;color:#64748b;text-align:center;margin-bottom:16px}
-.edit-section{margin-bottom:16px}
-.edit-section h4{font-size:14px;color:#64748b;margin-bottom:8px;font-weight:700}
-.edit-toggles{display:flex;flex-wrap:wrap;gap:8px}
-.edit-toggle{padding:10px 16px;border-radius:10px;font-size:14px;font-weight:600;
-  background:#f1f5f9;color:#475569;min-height:44px;transition:.15s}
-.edit-toggle.active{background:#3b82f6;color:#fff}
-.edit-toggle.active.remove{background:#ef4444;color:#fff}
-.edit-toggle.active.extra{background:#f59e0b;color:#fff}
-.edit-toggle:active{transform:scale(.95)}
-.edit-notes{margin-top:8px}
-.edit-notes input{width:100%;height:48px;border:2px solid #e2e8f0;border-radius:10px;padding:0 14px;
-  font-size:16px;background:#fff}
-.edit-notes input:focus{border-color:#3b82f6}
-.edit-notes input[readonly]{cursor:pointer;background:#f8fafc}
-.edit-price{font-size:24px;font-weight:800;text-align:center;margin:14px 0;color:#1e293b}
-.edit-actions{display:flex;gap:10px}
-.edit-actions button{flex:1;padding:14px;border-radius:12px;font-size:16px;font-weight:700;min-height:54px}
-.btn-edit-save{background:#16a34a;color:#fff}
-.btn-edit-cancel{background:#64748b;color:#fff}
+/* == EDITAR PRODUCTO == */
+.edit-modal .modal{width:640px}
+.edit-cab{display:flex;justify-content:space-between;align-items:center;gap:16px}
+#edit-base-price{height:48px;padding:0 16px;border-radius:12px;border:2px dashed var(--rojo);color:var(--rojo);font-weight:700;font-size:15px;
+  display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+#edit-base-price:active{background:#FBE7EA}
+.edit-toggles{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.edit-toggle{height:48px;padding:0 16px;border-radius:12px;border:2px solid #D4D4D4;background:#FFFFFF;font-size:15px;font-weight:600}
+.edit-toggle.active.remove{background:var(--rojo);border-color:var(--rojo);color:#FFFFFF}
+.edit-toggle.active.extra{background:var(--tinta);border-color:var(--tinta);color:#FFFFFF}
+.edit-price{display:flex;justify-content:space-between;align-items:center;border-top:2px solid var(--tinta);padding-top:14px}
+.edit-price span{font-family:var(--display);font-size:22px;text-transform:uppercase}
+.edit-price b{font-family:var(--display);font-size:40px;font-weight:700}
 
-/* == ADMIN MODAL == */
-.admin-modal .modal{width:700px;max-width:98vw;padding:24px}
-.admin-title{font-size:22px;font-weight:800;margin-bottom:16px;color:#1e293b}
-.admin-section{margin-bottom:20px}
-.admin-section h3{font-size:16px;color:#3b82f6;margin-bottom:10px;font-weight:700}
-.admin-form{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
-.admin-field{display:flex;flex-direction:column;gap:4px}
-.admin-field label{font-size:13px;color:#64748b;font-weight:600}
-.admin-field input,.admin-field select{height:48px;border:2px solid #e2e8f0;border-radius:10px;
-  padding:0 12px;font-size:16px;min-width:140px;background:#fff}
-.admin-field input:focus{border-color:#3b82f6}
-.admin-field input[readonly]{background:#f1f5f9;cursor:pointer}
-.btn-admin-add{height:48px;padding:0 20px;background:#3b82f6;color:#fff;border-radius:10px;
-  font-size:15px;font-weight:700}
-.btn-admin-add:active{background:#2563eb}
-.admin-list{max-height:340px;overflow-y:auto;-webkit-overflow-scrolling:touch}
-.admin-list table{width:100%;border-collapse:collapse}
-.admin-list th{background:#f1f5f9;padding:10px 8px;font-size:13px;color:#64748b;text-align:left;
-  position:sticky;top:0}
-.admin-list td{padding:8px;border-bottom:1px solid #f1f5f9;font-size:14px;vertical-align:middle}
-.admin-list .al-price{font-weight:700;cursor:pointer;color:#16a34a;background:#f0fdf4;
-  border-radius:6px;padding:4px 8px;display:inline-block;min-width:60px;text-align:right}
-.admin-list .al-price:active{background:#dcfce7}
-.admin-list .al-del{width:40px;height:40px;border-radius:8px;background:#fef2f2;color:#ef4444;font-size:16px}
-.admin-list .al-del:active{background:#ef4444;color:#fff}
-.btn-admin-close{width:100%;padding:14px;background:#64748b;color:#fff;border-radius:12px;
-  font-size:16px;font-weight:700;margin-top:10px}
-.btn-admin-close:active{background:#475569}
-
-/* == STATS MODAL == */
-.stat-btn { background:#e2e8f0; color:#475569; padding:10px 16px; border-radius:10px; font-weight:bold; font-size:15px; }
-.stat-btn.active { background:#3b82f6; color:#fff; }
-.stat-date { padding:10px; border:2px solid #e2e8f0; border-radius:10px; font-size:15px; font-weight:bold; color:#1e293b; background:#fff; }
-
-/* == SALES MODAL == */
-.ventas-modal .modal{width:650px;max-width:98vw;padding:24px}
-.ventas-title{font-size:22px;font-weight:800;margin-bottom:6px}
-.ventas-summary{display:flex;gap:16px;margin-bottom:14px}
-.ventas-summary .vs-box{flex:1;background:#f1f5f9;border-radius:12px;padding:14px;text-align:center}
-.vs-box .vs-val{font-size:24px;font-weight:800;color:#1e293b}
-.vs-box .vs-lbl{font-size:13px;color:#64748b}
-.ventas-list{max-height:360px;overflow-y:auto;-webkit-overflow-scrolling:touch}
-.ventas-list table{width:100%;border-collapse:collapse}
-.ventas-list th{background:#f1f5f9;padding:10px 8px;font-size:13px;color:#64748b;text-align:left;position:sticky;top:0}
-.ventas-list td{padding:8px;border-bottom:1px solid #f1f5f9;font-size:14px}
-.btn-ventas-close{width:100%;padding:14px;background:#64748b;color:#fff;border-radius:12px;
-  font-size:16px;font-weight:700;margin-top:12px}
-
-/* == RECEIPT MODAL == */
-.receipt-modal .modal{width:360px;padding:0;border-radius:12px;overflow:hidden}
-#receipt-content{font-family:'Arial',Helvetica,sans-serif;font-size:13px;padding:0 15px 100px 25px;background:#fff;color:#000;line-height:1.5}
+/* == TICKET == */
+.receipt-modal .modal{width:400px;display:flex;flex-direction:column}
+.receipt-modal .modal::before{display:none}
+.receipt-cab{background:var(--tinta);color:#FFFFFF;padding:14px 20px;font-family:var(--display);font-size:22px;font-weight:700;text-transform:uppercase}
+#receipt-content{font-family:Arial,Helvetica,sans-serif;font-size:13px;padding:16px 28px 10px;background:#FFFFFF;color:#000000;line-height:1.5}
 #receipt-content .rc-center{text-align:center}
 #receipt-content .rc-bold{font-weight:700}
-#receipt-content .rc-line{border-bottom:1px dashed #000;margin:8px 0}
-#receipt-content .rc-row{display:flex;justify-content:space-between}
+#receipt-content .rc-line{border-bottom:1px dashed #000000;margin:8px 0}
+#receipt-content .rc-row{display:flex;justify-content:space-between;gap:12px}
 #receipt-content .rc-total-row{display:flex;justify-content:space-between;font-weight:700;font-size:16px;margin-top:4px}
-#receipt-content .rc-mods{color:#666;font-size:11px;margin-left:10px}
-.receipt-actions{display:flex;gap:8px;padding:12px 16px;background:#f1f5f9}
-.receipt-actions button{flex:1;padding:12px;border-radius:10px;font-size:15px;font-weight:700;min-height:48px}
-.btn-receipt-print{background:#3b82f6;color:#fff}
-.btn-receipt-close{background:#64748b;color:#fff}
-
-/* == VIRTUAL KEYBOARD == */
-.vkb-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;
-  justify-content:center;align-items:flex-end;z-index:200;padding-bottom:20px}
-.vkb-overlay.open{display:flex}
-.vkb{background:#e8eaed;border-radius:16px 16px 0 0;padding:12px;width:100%;max-width:700px}
-.vkb-display{background:#fff;border-radius:10px;padding:12px 16px;font-size:22px;
-  min-height:50px;margin-bottom:10px;color:#1e293b;word-break:break-all;text-align:left}
-.vkb-row{display:flex;gap:6px;justify-content:center;margin-bottom:6px}
-.vkb-row button{height:52px;min-width:42px;border-radius:8px;font-size:18px;font-weight:600;
-  background:#fff;color:#1e293b;flex:0 0 auto;padding:0 12px;transition:.1s}
-.vkb-row button:active{background:#c8ccd0}
-.vkb-row .vk-space{flex:1;max-width:280px}
-.vkb-row .vk-back{background:#fef2f2;color:#ef4444;min-width:70px}
-.vkb-row .vk-enter{background:#3b82f6;color:#fff;min-width:90px}
-.vkb-row .vk-shift{background:#e2e8f0;min-width:70px}
-.vkb-row .vk-cancel{background:#ef4444;color:#fff;min-width:90px}
-
-/* == TOAST == */
-#toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;
-  padding:14px 28px;border-radius:12px;font-size:16px;font-weight:600;z-index:300;
-  opacity:0;transition:opacity .3s;pointer-events:none}
-#toast.show{opacity:1}
+#receipt-content .rc-mods{color:#555555;font-size:11px;margin-left:12px}
+.receipt-rayas{height:10px;flex:none;background:var(--rayas);border-top:2px solid var(--tinta);border-bottom:2px solid var(--tinta)}
+.receipt-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 16px;background:var(--gris)}
 
 /* == PEDIDOS EN ESPERA == */
-.pedidos-modal .modal { width: 750px; max-width: 98vw; padding: 24px; }
-.pedidos-list { max-height: 400px; overflow-y: auto; -webkit-overflow-scrolling: touch; margin-top: 15px; }
-.pedidos-list table { width: 100%; border-collapse: collapse; }
-.pedidos-list th { background: #f1f5f9; padding: 12px; font-size: 14px; color: #64748b; text-align: left; position: sticky; top: 0; }
-.pedidos-list td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 15px; vertical-align: middle; }
-.btn-cargar-pedido { background: #3b82f6; color: #fff; padding: 12px 20px;; border-radius: 8px; font-weight: bold; font-size: 16px; min-width: 100px;}
-.btn-cargar-pedido:active { background: #2563eb; }
-.al-del { width: 55px; height: 55px; font-size: 24px; margin-left: 12px !important; border-radius: 12px; background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; }
-.al-del:active { background: #ef4444; color: #fff; transform: scale(0.9); }
+.pedidos-modal .modal{width:920px}
+.pedidos-list{max-height:380px}
+.hora-pill{background:var(--tinta);color:#FFFFFF;font-family:var(--display);font-size:17px;padding:4px 10px;border-radius:8px}
+.form-espera-modal .modal{width:480px}
 
-#order-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-#btn-comanda { background: #3b82f6; color: #fff; }
-#btn-comanda:disabled { background: #93c5fd; }
-#btn-espera { background: #f59e0b; color: #fff; }
-#btn-espera:disabled { background: #fcd34d; }
+/* == VENTAS, ESTADÍSTICAS, GESTIÓN == */
+.ventas-modal .modal{width:1000px}
+.ventas-list{max-height:390px}
+.stats-modal .modal{width:1080px}
+#stats-list{max-height:350px}
+.stat-btn{height:46px;padding:0 18px;border-radius:999px;border:2px solid var(--tinta);background:#FFFFFF;font-weight:700;font-size:15px}
+.stat-btn.active{background:var(--rojo);border-color:var(--rojo);color:#FFFFFF}
+.filtros{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;background:var(--gris);border-radius:12px;padding:12px 14px}
+.filtros .campo input,.filtros .campo select{height:46px;font-size:15px;min-width:150px;border-radius:10px}
+.check{display:flex;gap:6px;align-items:center;font-weight:700;font-size:15px;cursor:pointer}
+.check input{width:20px;height:20px;accent-color:var(--rojo)}
+.st-cat td{background:#F2F2F2;font-family:var(--display);font-size:17px;font-weight:700;text-transform:uppercase}
+.st-sub td:first-child{padding-left:32px}
+.st-total td{background:var(--tinta);color:#FFFFFF;font-family:var(--display);font-size:19px;font-weight:700;text-transform:uppercase}
+.admin-modal .modal{width:960px}
+.admin-form{background:var(--gris);border-radius:14px;padding:14px;display:grid;grid-template-columns:2fr 1fr 1.4fr auto;gap:12px;align-items:end}
+.admin-form .campo input,.admin-form .campo select{height:52px;font-size:17px}
+.admin-list{max-height:360px}
+.al-price{height:44px;padding:0 14px;border-radius:10px;border:2px solid var(--tinta);background:#FFFFFF;font-family:var(--display);font-size:18px;font-weight:700}
 
-.form-espera-modal .modal { width: 400px; padding: 24px; }
-.form-espera-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
-.form-espera-field label { font-size: 14px; font-weight: 600; color: #475569; }
-.form-espera-field input { height: 50px; border: 2px solid #e2e8f0; border-radius: 10px; padding: 0 14px; font-size: 18px; background: #fff; }
-.form-espera-field input[readonly] { cursor: pointer; background: #f8fafc; }
-.pedido-loaded-banner { background: #fef3c7; color: #b45309; padding: 8px; text-align: center; font-size: 13px; font-weight: bold; border-bottom: 1px solid #fde68a; display: none; }
+/* == CIERRE DE CAJA == */
+.cierre-modal .modal{position:absolute;inset:14px;width:auto;max-width:none;max-height:none;display:flex;flex-direction:column;overflow:hidden}
+.cierre-grid{flex:1;display:grid;grid-template-columns:1fr 470px;gap:20px;padding:16px 20px 18px;min-height:0}
+.cierre-izq,.cierre-der{display:flex;flex-direction:column;gap:10px;min-height:0}
+.billetes{background:var(--gris);border-radius:14px;padding:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;flex:1;align-content:start;overflow-y:auto}
+.den{display:flex;align-items:center;justify-content:space-between;gap:6px;border:2px solid var(--linea);border-radius:12px;padding:8px 10px;background:#FFFFFF}
+.den b{font-family:var(--display);font-size:21px;font-weight:700;min-width:60px}
+.btn-step{width:46px;height:46px;border-radius:10px;background:var(--gris-2);font-size:24px;font-weight:700;flex:none}
+.btn-step:active{background:#D4D4D4}
+.cant{width:56px;height:46px;border:2px solid var(--tinta);border-radius:10px;text-align:center;font-family:var(--display);font-size:22px;font-weight:700;
+  -moz-appearance:textfield}
+.cant::-webkit-outer-spin-button,.cant::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.cant:focus{outline:3px solid var(--rojo);outline-offset:1px}
+.cierre-contado{display:flex;justify-content:space-between;align-items:center;background:var(--tinta);color:#FFFFFF;border-radius:14px;padding:12px 18px}
+.cierre-contado span{font-family:var(--display);font-size:22px;text-transform:uppercase}
+.cierre-contado b{font-family:var(--display);font-size:36px;font-weight:700}
+.cierre-resumen{border:2px solid var(--tinta);border-radius:14px;padding:8px 18px}
+.c-fila{display:flex;justify-content:space-between;align-items:center;font-size:18px;font-weight:600;padding:6px 0;gap:10px}
+.c-fila b{font-family:var(--display);font-size:22px}
+.c-fila.mas{color:var(--verde)}
+.c-fila.menos{color:var(--rojo-txt)}
+.c-fila.teorico{border-top:2px dashed var(--tinta);margin-top:4px;padding-top:10px}
+.c-fila.teorico b{font-size:28px}
+.cierre-descuadre{border-radius:14px;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;border:2px solid}
+.cierre-descuadre span{font-family:var(--display);font-size:22px;text-transform:uppercase}
+.cierre-descuadre b{font-family:var(--display);font-size:30px;font-weight:700}
+.cierre-descuadre.ok{background:var(--verde-claro);border-color:var(--verde);color:#14532D}
+.cierre-descuadre.bad{background:#FBE3E7;border-color:var(--rojo);color:var(--rojo-txt)}
+.cierre-tarjeta{background:var(--gris);border-radius:14px;padding:6px 18px}
 
-#edit-base-price { cursor: pointer; background: #eff6ff; color: #2563eb; padding: 10px 16px; border-radius: 10px; display: inline-block; margin: 0 auto 16px; font-weight: 800; border: 2px dashed #93c5fd; transition: 0.15s; }
-#edit-base-price:active { transform: scale(0.95); background: #dbeafe; }
+/* == ENTRADAS Y SALIDAS == */
+.mov-modal .modal{width:960px}
+.mov-cuerpo{display:grid;grid-template-columns:1fr 1fr;gap:26px;padding:20px 24px 22px}
+.mov-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mov-tabs .pay-tab{height:54px;font-size:19px}
+.mov-tabs .tab-salida.active{background:var(--rojo);border-color:var(--rojo)}
+.mov-lado{display:flex;flex-direction:column;gap:12px;background:var(--gris);border-radius:14px;padding:16px}
+#mov-resumen{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#mov-resumen .vs-box{background:#FFFFFF}
+#mov-list{max-height:280px;background:#FFFFFF}
 
-/* == CIERRE MODAL == */
-.cierre-modal .modal { width: 96vw; height: 96vh; max-width: none; padding: 30px; display: flex; flex-direction: column; }
-.cierre-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; flex: 1; overflow-y: auto; }
-.cierre-panel { background: #f8fafc; padding: 25px; border-radius: 16px; border: 2px solid #e2e8f0; display: flex; flex-direction: column; }
-.cierre-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; font-size: 22px; font-weight: 700; color: #475569; }
-.cierre-row .input-wrapper { display: flex; align-items: center; gap: 8px; }
-.cierre-row .btn-step { width: 55px; height: 60px; font-size: 36px; font-weight: bold; background: #e2e8f0; color: #334155; border-radius: 12px; transition: 0.1s; display: flex; justify-content: center; align-items: center; line-height: 0; padding-bottom: 4px; }
-.cierre-row .btn-step:active { background: #cbd5e1; transform: scale(0.92); }
-.cierre-row input { width: 100px; height: 60px; text-align: center; font-size: 28px; font-weight: 900; border: 3px solid #cbd5e1; border-radius: 12px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); -moz-appearance: textfield; }
-.cierre-row input::-webkit-outer-spin-button, .cierre-row input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-.cierre-row input:focus { border-color: #3b82f6; outline: none; background: #eff6ff; }
-.cierre-totales { margin-top: auto; padding-top: 20px; border-top: 3px dashed #cbd5e1; }
-.cierre-totales .c-total { font-size: 26px; font-weight: 800; color: #1e293b; display: flex; justify-content: space-between; margin-bottom: 15px;}
-.cierre-descuadre { font-size: 32px; font-weight: 900; text-align: center; padding: 20px; border-radius: 14px; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-.cierre-descuadre.ok { background: #dcfce7; color: #16a34a; border: 2px solid #bbf7d0; }
-.cierre-descuadre.bad { background: #fef2f2; color: #ef4444; border: 2px solid #fecaca; }
-.cierre-tarjeta-box { background: #eff6ff; border: 3px solid #bfdbfe; padding: 20px; border-radius: 14px; margin-top: 25px; }
+/* == CONFIRMACIÓN == */
+.confirm-modal{z-index:180}
+.confirm-modal .modal{width:520px}
+#confirm-detalle{background:var(--gris);border-radius:12px;padding:12px 16px;font-size:16px;line-height:1.5;white-space:pre-line}
+#confirm-detalle:empty{display:none}
+#confirm-mensaje{font-size:17px;line-height:1.5}
 
-/* == PRINT STYLES == */
+/* == TECLADO VIRTUAL == */
+.vkb-overlay{position:fixed;inset:0;background:rgba(17,17,17,.62);display:none;justify-content:center;align-items:flex-end;z-index:200}
+.vkb-overlay.open{display:flex}
+.vkb{width:960px;max-width:100%;background:#E9E9E9;border:2px solid var(--tinta);border-bottom:0;border-radius:18px 18px 0 0;overflow:hidden}
+.vkb::before{content:"";display:block;height:10px;background:var(--rayas);border-bottom:2px solid var(--tinta)}
+.vkb-cuerpo{padding:14px 16px 12px}
+.vkb-display{background:#FFFFFF;border:2px solid var(--tinta);border-radius:12px;padding:10px 16px;font-size:24px;min-height:52px;margin-bottom:12px;word-break:break-all}
+.vkb-row{display:flex;gap:7px;justify-content:center;margin-bottom:7px}
+.vkb-row button{height:58px;min-width:64px;border-radius:10px;border:2px solid #D4D4D4;background:#FFFFFF;font-size:21px;font-weight:600;padding:0 10px;transition:background .1s}
+.vkb-row button:active{background:#D4D4D4}
+.vkb-row .vk-num{background:var(--gris)}
+.vkb-row .vk-space{flex:1;max-width:420px;color:#6B6B6B;font-size:16px}
+.vkb-row .vk-back{min-width:110px;background:var(--gris)}
+.vkb-row .vk-shift{background:var(--gris)}
+.vkb-row .vk-shift.on{background:var(--tinta);color:#FFFFFF;border-color:var(--tinta)}
+.vkb-row .vk-cancel{min-width:150px;font-family:var(--display);font-size:19px;text-transform:uppercase;border-color:var(--tinta)}
+.vkb-row .vk-enter{min-width:170px;background:var(--rojo);border-color:var(--rojo);color:#FFFFFF;font-family:var(--display);font-size:20px;font-weight:700;text-transform:uppercase}
+
+/* == AVISOS == */
+#toast{position:fixed;top:78px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;max-width:90vw;
+  background:var(--tinta);color:#FFFFFF;padding:14px 22px;border-radius:12px;font-size:17px;font-weight:600;
+  box-shadow:0 10px 26px rgba(0,0,0,.25);z-index:300;opacity:0;transition:opacity .3s;pointer-events:none}
+#toast.show{opacity:1}
+#toast svg{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+#toast.ok svg{color:#7EE2A0}
+#toast.aviso svg{color:#FFD27A}
+#toast.error{background:var(--rojo)}
+
+/* == IMPRESIÓN DESDE EL NAVEGADOR (sin impresora configurada) == */
 @media print{
   @page{margin:0;size:80mm auto}
   body *{visibility:hidden}
-  .receipt-modal,.receipt-modal *{visibility:visible}
-  .receipt-modal .modal{position:absolute;left:0;top:0;width:80mm;box-shadow:none;border-radius:0}
-  .receipt-actions{display:none!important}
+  #receipt-content,#receipt-content *{visibility:visible}
+  #receipt-content{position:absolute;left:0;top:0;width:80mm;padding:0 4mm}
 }
 </style>
 </head>
 <body>
 <div id="app">
-  <div id="topbar">
-    <div class="title">🐔 <span class="title-text">Pollería Las Portadas</span></div>
+  <header id="topbar">
+    <div class="title">Las Portadas <span class="title-text title-tpv">TPV</span></div>
     <div class="clock" id="clock">00:00:00</div>
-    <span class="printer-status" id="printer-status" onclick="mostrarEstadoImpresora()" title="Comprobando impresora...">🖨️</span>
-    <button onclick="abrirCajon(true)">💰 <span class="lbl-largo">Abrir </span>Cajón</button>
-    <button onclick="openMovimientos()">💸 <span class="lbl-largo">Entradas/Salidas</span><span class="lbl-corto">Entr./Sal.</span></button>
-    <button onclick="openPedidosModal()">📞 Pedidos</button>
-    <button onclick="openVentas()">📊 Ventas</button>
-    <button onclick="openStats()">📈 <span class="lbl-largo">Estadísticas</span><span class="lbl-corto">Estad.</span></button>
-    <button onclick="openCierre()">🔒 Cierre<span class="lbl-largo"> de Caja</span></button>
-    <button onclick="openAdmin()">⚙️ Gestión</button>
-  </div>
-  <div id="left">
-    <div style="padding: 10px 12px 0;">
-      <button onclick="anadirVarios()" style="width: 100%; padding: 12px; background: #8b5cf6; color: white; border-radius: 10px; font-size: 16px; font-weight: bold; box-shadow: 0 4px 6px -1px rgba(139, 92, 246, 0.2);">
-        ➕ Añadir Varios (Fuera de Carta)
-      </button>
+    <span class="printer-status" id="printer-status" onclick="mostrarEstadoImpresora()" title="Comprobando impresora..." role="button" tabindex="0" aria-label="Estado de la impresora">
+      <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+    </span>
+    <button class="btn-cajon" onclick="abrirCajon(true)"><span class="lbl-largo">Abrir </span>Cajón</button>
+    <button onclick="openMovimientos()"><span class="lbl-largo">Entradas/Salidas</span><span class="lbl-corto">Entr./Sal.</span></button>
+    <button onclick="openPedidosModal()">Pedidos</button>
+    <button onclick="openVentas()">Ventas</button>
+    <button onclick="openStats()"><span class="lbl-largo">Estadísticas</span><span class="lbl-corto">Estad.</span></button>
+    <button onclick="openCierre()">Cierre<span class="lbl-largo"> de Caja</span></button>
+    <button onclick="openAdmin()">Gestión</button>
+  </header>
+  <section id="left">
+    <div id="cat-bar">
+      <div id="cat-tabs"></div>
+      <button class="btn-varios" onclick="anadirVarios()">+ Varios</button>
     </div>
-    
-    <div id="cat-tabs"></div>
     <div id="subcat-tabs"></div>
     <div id="prod-grid"></div>
-  </div>
-  <div id="right">
+  </section>
+  <aside id="right">
     <div id="order-header">
-      <span>🛒 Pedido Actual</span>
+      <h2>Pedido actual</h2>
+      <span id="order-count"></span>
     </div>
     <div id="pedido-loaded-banner" class="pedido-loaded-banner"></div>
     <div id="order-list"><div id="order-empty">Toca un producto para empezar</div></div>
     <div id="order-footer">
-      <div id="order-total">TOTAL: 0,00 €</div>
+      <div id="order-total"><span>Total</span><b id="order-total-val">0,00 €</b></div>
       <div id="order-actions">
-        <button id="btn-limpiar" onclick="clearOrder()">🗑️ Limpiar</button>
-        <button id="btn-comanda" onclick="imprimirComanda()" disabled>🖨️ Comanda</button>
-        <button id="btn-espera" onclick="abrirModalEspera()" disabled>⏳ Espera</button>
-        <button id="btn-cobrar" onclick="openPay()" disabled>💶 Cobrar</button>
+        <button id="btn-limpiar" onclick="clearOrder()">Limpiar</button>
+        <button id="btn-espera" onclick="abrirModalEspera()" disabled>Espera</button>
+        <button id="btn-comanda" onclick="imprimirComanda()" disabled>Comanda</button>
+        <button id="btn-cobrar" onclick="openPay()" disabled>Cobrar</button>
+      </div>
     </div>
-    </div>
-  </div>
+  </aside>
 </div>
 
 <div class="modal-overlay numpad-modal" id="numpad-overlay">
   <div class="modal">
-    <div class="numpad-title" id="numpad-title">Introduce valor</div>
-    <div class="numpad-display" id="numpad-display">0</div>
-    <div class="numpad-grid">
-      <button onclick="npPress('7')">7</button><button onclick="npPress('8')">8</button><button onclick="npPress('9')">9</button>
-      <button onclick="npPress('4')">4</button><button onclick="npPress('5')">5</button><button onclick="npPress('6')">6</button>
-      <button onclick="npPress('1')">1</button><button onclick="npPress('2')">2</button><button onclick="npPress('3')">3</button>
-      <button class="np-clear" onclick="npClear()">C</button><button onclick="npPress('0')">0</button><button onclick="npPress('.')">.</button>
-      <button class="np-back" onclick="npBack()">⌫</button><button class="np-confirm" style="grid-column:span 2" onclick="npConfirm()">✔ Aceptar</button>
+    <div class="modal-cuerpo" style="padding:18px 20px 20px;gap:12px">
+      <div class="etq numpad-title" id="numpad-title">Introduce valor</div>
+      <div class="pantalla" id="numpad-display">0</div>
+      <div class="np">
+        <button onclick="npPress('7')">7</button><button onclick="npPress('8')">8</button><button onclick="npPress('9')">9</button>
+        <button onclick="npPress('4')">4</button><button onclick="npPress('5')">5</button><button onclick="npPress('6')">6</button>
+        <button onclick="npPress('1')">1</button><button onclick="npPress('2')">2</button><button onclick="npPress('3')">3</button>
+        <button class="np-clear" onclick="npClear()">C</button><button onclick="npPress('0')">0</button><button onclick="npPress('.')">,</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;gap:8px">
+        <button class="btn np-back" style="height:62px" onclick="npBack()">Borrar</button>
+        <button class="btn btn-rojo np-confirm" style="height:62px;font-size:22px" onclick="npConfirm()">Aceptar</button>
+      </div>
     </div>
   </div>
 </div>
 
 <div class="modal-overlay pay-modal" id="pay-overlay">
   <div class="modal">
-    <div class="pay-total-label">Total a cobrar</div>
-    <div class="pay-total" id="pay-total">0,00 €</div>
-    <div class="pay-tabs">
-      <button class="pay-tab tab-efectivo active" onclick="setPayTab('efectivo')">💵 Efectivo</button>
-      <button class="pay-tab tab-tarjeta" onclick="setPayTab('tarjeta')">💳 Tarjeta</button>
-      <button class="pay-tab tab-mixto" onclick="setPayTab('mixto')">💵+💳 Mixto</button>
-    </div>
-    <div class="pay-section active" id="pay-sec-efectivo">
-      <div class="pay-field-label">💵 Efectivo entregado</div>
-      <div class="pay-cash-display" id="pay-cash-ef">0</div>
-      <div class="pay-quick">
-        <button onclick="payQuick('exacto')">Exacto</button>
-        <button onclick="payQuick(5)">5 €</button>
-        <button onclick="payQuick(10)">10 €</button>
-        <button onclick="payQuick(20)">20 €</button>
-        <button onclick="payQuick(50)">50 €</button>
+    <div class="pay-cuerpo">
+      <div class="pay-cab">
+        <div>
+          <div class="etq">Total a cobrar</div>
+          <div class="pay-total" id="pay-total">0,00 €</div>
+        </div>
+        <div class="pay-tabs">
+          <button class="pay-tab tab-efectivo active" onclick="setPayTab('efectivo')">Efectivo</button>
+          <button class="pay-tab tab-tarjeta" onclick="setPayTab('tarjeta')">Tarjeta</button>
+          <button class="pay-tab tab-mixto" onclick="setPayTab('mixto')">Mixto</button>
+        </div>
       </div>
-      <div class="pay-numpad" id="pay-np-ef">
-        <button onclick="payNp('7','ef')">7</button><button onclick="payNp('8','ef')">8</button><button onclick="payNp('9','ef')">9</button>
-        <button onclick="payNp('4','ef')">4</button><button onclick="payNp('5','ef')">5</button><button onclick="payNp('6','ef')">6</button>
-        <button onclick="payNp('1','ef')">1</button><button onclick="payNp('2','ef')">2</button><button onclick="payNp('3','ef')">3</button>
-        <button class="np-clear" onclick="payNpClear('ef')">C</button><button onclick="payNp('0','ef')">0</button><button onclick="payNp('.','ef')">.</button>
-        <button class="np-back" onclick="payNpBack('ef')" style="grid-column:span 3">⌫ Borrar</button>
+
+      <div class="pay-section active" id="pay-sec-efectivo">
+        <div class="pay-datos">
+          <div>
+            <div class="etq" style="margin-bottom:6px">Entrega el cliente</div>
+            <div class="pantalla" id="pay-cash-ef">0</div>
+          </div>
+          <div class="pay-change negative" id="pay-change-ef"><span>Cambio</span><b>0,00 €</b></div>
+        </div>
+        <div class="pay-teclado">
+          <div class="pay-quick">
+            <button class="exacto" onclick="payQuick('exacto')">Exacto</button>
+            <button onclick="payQuick(5)">5 €</button>
+            <button onclick="payQuick(10)">10 €</button>
+            <button onclick="payQuick(20)">20 €</button>
+            <button onclick="payQuick(50)">50 €</button>
+          </div>
+          <div class="np" id="pay-np-ef">
+            <button onclick="payNp('7','ef')">7</button><button onclick="payNp('8','ef')">8</button><button onclick="payNp('9','ef')">9</button>
+            <button onclick="payNp('4','ef')">4</button><button onclick="payNp('5','ef')">5</button><button onclick="payNp('6','ef')">6</button>
+            <button onclick="payNp('1','ef')">1</button><button onclick="payNp('2','ef')">2</button><button onclick="payNp('3','ef')">3</button>
+            <button class="np-clear" onclick="payNpClear('ef')">C</button><button onclick="payNp('0','ef')">0</button><button onclick="payNp('.','ef')">,</button>
+          </div>
+          <button class="btn" onclick="payNpBack('ef')">Borrar</button>
+        </div>
       </div>
-      <div class="pay-change negative" id="pay-change-ef">Cambio: 0,00 €</div>
-    </div>
-    <div class="pay-section" id="pay-sec-tarjeta">
-      <div class="pay-card-info">
-        <span class="big-icon">💳</span>
-        Cobro con tarjeta por el total<br><strong id="pay-card-total">0,00 €</strong>
+
+      <div class="pay-section" id="pay-sec-tarjeta">
+        <div class="pay-datos">
+          <p class="pay-nota">Se cobra el total con tarjeta. El cajón no se abre.</p>
+        </div>
+        <div class="pay-teclado">
+          <div class="pay-card-info">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/></svg>
+            <div class="etq">Pasa la tarjeta por el datáfono</div>
+            <strong id="pay-card-total">0,00 €</strong>
+            <div class="pay-nota">Cuando el datáfono lo apruebe, pulsa Confirmar pago.</div>
+          </div>
+        </div>
       </div>
-    </div>
-    <div class="pay-section" id="pay-sec-mixto">
-      <div class="pay-field-label">💵 Parte en efectivo</div>
-      <div class="pay-cash-display" id="pay-cash-mx">0</div>
-      <div class="pay-numpad" id="pay-np-mx">
-        <button onclick="payNp('7','mx')">7</button><button onclick="payNp('8','mx')">8</button><button onclick="payNp('9','mx')">9</button>
-        <button onclick="payNp('4','mx')">4</button><button onclick="payNp('5','mx')">5</button><button onclick="payNp('6','mx')">6</button>
-        <button onclick="payNp('1','mx')">1</button><button onclick="payNp('2','mx')">2</button><button onclick="payNp('3','mx')">3</button>
-        <button class="np-clear" onclick="payNpClear('mx')">C</button><button onclick="payNp('0','mx')">0</button><button onclick="payNp('.','mx')">.</button>
-        <button class="np-back" onclick="payNpBack('mx')" style="grid-column:span 3">⌫ Borrar</button>
+
+      <div class="pay-section" id="pay-sec-mixto">
+        <div class="pay-datos">
+          <div>
+            <div class="etq" style="margin-bottom:6px">Parte en efectivo</div>
+            <div class="pantalla" id="pay-cash-mx" style="font-size:36px;min-height:60px">0</div>
+          </div>
+          <div>
+            <div class="etq" style="margin-bottom:6px">Parte con tarjeta (automático)</div>
+            <div class="pantalla pay-card-display" id="pay-card-mx" style="font-size:36px;min-height:60px">0,00 €</div>
+          </div>
+        </div>
+        <div class="pay-teclado">
+          <p class="pay-nota">Teclea lo que entrega en efectivo; el resto se cobra con tarjeta. El cajón se abre.</p>
+          <div class="np" id="pay-np-mx">
+            <button onclick="payNp('7','mx')">7</button><button onclick="payNp('8','mx')">8</button><button onclick="payNp('9','mx')">9</button>
+            <button onclick="payNp('4','mx')">4</button><button onclick="payNp('5','mx')">5</button><button onclick="payNp('6','mx')">6</button>
+            <button onclick="payNp('1','mx')">1</button><button onclick="payNp('2','mx')">2</button><button onclick="payNp('3','mx')">3</button>
+            <button class="np-clear" onclick="payNpClear('mx')">C</button><button onclick="payNp('0','mx')">0</button><button onclick="payNp('.','mx')">,</button>
+          </div>
+          <button class="btn" onclick="payNpBack('mx')">Borrar</button>
+        </div>
       </div>
-      <div class="pay-field-label">💳 Parte con tarjeta (automático)</div>
-      <div class="pay-card-display" id="pay-card-mx">0,00 €</div>
-    </div>
-    <div class="pay-actions">
-      <button id="btn-pay-cancel" onclick="closePay()">✖ Cancelar</button>
-      <button id="btn-pay-confirm" disabled onclick="confirmPay()">✔ Confirmar Pago</button>
+
+      <div class="pay-acciones">
+        <button class="btn" id="btn-pay-cancel" onclick="closePay()">Cancelar</button>
+        <button class="btn btn-rojo" id="btn-pay-confirm" disabled onclick="confirmPay()">Confirmar pago</button>
+      </div>
     </div>
   </div>
 </div>
 
 <div class="modal-overlay edit-modal" id="edit-overlay">
   <div class="modal">
-    <div class="edit-title" id="edit-title">Editar producto</div>
-    <div style="text-align: center;">
-      <div id="edit-base-price" onclick="editarPrecioBase()">✏️ Precio base: 0,00 €</div>
-    </div>
-    <div class="edit-section">
-      <h4>🚫 Quitar ingrediente (gratis)</h4>
-      <div class="edit-toggles" id="edit-removals"></div>
-    </div>
-    <div class="edit-section">
-      <h4>➕ Extras (+0,80 € cada uno)</h4>
-      <div class="edit-toggles" id="edit-extras"></div>
-    </div>
-    <div class="edit-section edit-notes">
-      <h4>📝 Notas</h4>
-      <input id="edit-notes-input" readonly placeholder="Toca para escribir nota" onclick="openVKB('edit-notes-input')">
-    </div>
-    <div class="edit-price" id="edit-final-price">Precio: 0,00 €</div>
-    <div class="edit-actions">
-      <button class="btn-edit-cancel" onclick="closeEdit()">Cancelar</button>
-      <button class="btn-edit-save" onclick="saveEdit()">✔ Guardar</button>
+    <div class="modal-cuerpo" style="gap:18px">
+      <div class="edit-cab">
+        <h2 class="modal-tit" id="edit-title" style="font-size:34px">Editar producto</h2>
+        <button id="edit-base-price" onclick="editarPrecioBase()">Precio base: 0,00 €</button>
+      </div>
+      <div>
+        <div class="etq">Quitar ingrediente · gratis</div>
+        <div class="edit-toggles" id="edit-removals"></div>
+      </div>
+      <div>
+        <div class="etq">Extras · +0,80 € cada uno</div>
+        <div class="edit-toggles" id="edit-extras"></div>
+      </div>
+      <div class="campo">
+        <label for="edit-notes-input">Nota para cocina</label>
+        <input id="edit-notes-input" readonly placeholder="Toca para escribir una nota" onclick="openVKB('edit-notes-input')">
+      </div>
+      <div class="edit-price"><span>Precio por unidad</span><b id="edit-final-price">0,00 €</b></div>
+      <div class="modal-acciones">
+        <button class="btn" onclick="closeEdit()">Cancelar</button>
+        <button class="btn btn-rojo" onclick="saveEdit()">Guardar cambios</button>
+      </div>
     </div>
   </div>
 </div>
 
 <div class="modal-overlay admin-modal" id="admin-overlay">
   <div class="modal">
-    <div class="admin-title">⚙️ Gestión de Productos</div>
-    <div class="admin-section">
-      <h3>➕ Añadir nuevo plato</h3>
+    <div class="modal-cuerpo">
+      <h2 class="modal-tit">Gestión de productos</h2>
       <div class="admin-form">
-        <div class="admin-field"><label>Nombre</label>
+        <div class="campo"><label for="adm-name">Nombre del plato nuevo</label>
           <input id="adm-name" readonly placeholder="Toca para escribir" onclick="openVKB('adm-name')">
         </div>
-        <div class="admin-field"><label>Precio (€)</label>
-          <input id="adm-price" readonly placeholder="0.00" onclick="openNumpad('Precio del plato',function(v){document.getElementById('adm-price').value=v})">
+        <div class="campo"><label for="adm-price">Precio</label>
+          <input id="adm-price" readonly placeholder="0,00 €" onclick="openNumpad('Precio del plato',function(v){document.getElementById('adm-price').value=v.replace('.',',')})">
         </div>
-        <div class="admin-field"><label>Categoría</label>
+        <div class="campo"><label for="adm-cat">Categoría</label>
           <select id="adm-cat">
             <option>Aliños</option>
             <option>Bebidas</option>
@@ -504,212 +561,223 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;-webkit-tap-h
             <option>Sándwiches</option>
           </select>
         </div>
-        <button class="btn-admin-add" onclick="adminAdd()">Añadir</button>
+        <button class="btn btn-rojo" style="height:52px" onclick="adminAdd()">Añadir</button>
       </div>
+      <div class="lista admin-list" id="admin-list"></div>
+      <button class="btn btn-negro" onclick="closeAdmin()">Cerrar</button>
     </div>
-    <div class="admin-section">
-      <h3>📋 Productos actuales</h3>
-      <div class="admin-list" id="admin-list"></div>
-    </div>
-    <button class="btn-admin-close" onclick="closeAdmin()">Cerrar</button>
   </div>
 </div>
 
 <div class="modal-overlay ventas-modal" id="ventas-overlay">
   <div class="modal">
-    <div class="ventas-title">📊 Ventas de Hoy</div>
-    <div class="ventas-summary" id="ventas-summary"></div>
-    <div class="ventas-list" id="ventas-list"></div>
-    <button class="btn-ventas-close" onclick="closeVentas()">Cerrar</button>
+    <div class="modal-cuerpo">
+      <h2 class="modal-tit">Ventas de hoy</h2>
+      <div class="cajas" id="ventas-summary"></div>
+      <div class="lista ventas-list" id="ventas-list"></div>
+      <button class="btn btn-negro" onclick="closeVentas()">Cerrar</button>
+    </div>
   </div>
 </div>
 
 <div class="modal-overlay receipt-modal" id="receipt-overlay">
   <div class="modal">
+    <div class="receipt-cab" id="receipt-cab">Ticket</div>
     <div id="receipt-content"></div>
+    <div class="receipt-rayas"></div>
     <div class="receipt-actions">
-      <button class="btn-receipt-close" onclick="closeReceipt()">Cerrar</button>
-      <button class="btn-receipt-print" onclick="imprimirTicket()">🖨️ Imprimir</button>
+      <button class="btn" onclick="closeReceipt()">Cerrar</button>
+      <button class="btn btn-rojo" onclick="imprimirTicket()">Imprimir</button>
     </div>
   </div>
 </div>
 
 <div class="modal-overlay pedidos-modal" id="pedidos-overlay">
   <div class="modal">
-    <div class="admin-title">📞 Pedidos en Espera</div>
-    
-    <div style="margin-bottom: 15px; display: flex; gap: 10px;">
-      <input type="text" id="input-buscar-pedido" readonly 
-             placeholder="🔍 Buscar nombre o teléfono..." 
-             onclick="openVKB('input-buscar-pedido')" oninput="renderTablaPedidos()"
-             style="flex: 1; height: 50px; border: 2px solid #e2e8f0; border-radius: 10px; padding: 0 14px; font-size: 16px; background: #fff; cursor: pointer;">
-      <button onclick="limpiarBusquedaPedidos()" style="background: #ef4444; color: #fff; padding: 0 20px; border-radius: 10px; font-size: 18px; font-weight: bold;">✕</button>
+    <div class="modal-cuerpo">
+      <div style="display:flex;align-items:center;gap:16px">
+        <h2 class="modal-tit" style="margin-right:auto">Pedidos en espera</h2>
+        <span id="pedidos-contador" style="background:var(--ambar-fondo);color:var(--ambar-txt);font-weight:700;font-size:14px;padding:6px 12px;border-radius:999px"></span>
+      </div>
+      <div style="display:flex;gap:10px">
+        <div class="campo" style="flex:1">
+          <input type="text" id="input-buscar-pedido" readonly aria-label="Buscar pedido"
+                 placeholder="Buscar por nombre o teléfono"
+                 onclick="openVKB('input-buscar-pedido')" oninput="renderTablaPedidos()">
+        </div>
+        <button class="btn" onclick="limpiarBusquedaPedidos()">Limpiar</button>
+      </div>
+      <div class="lista pedidos-list" id="pedidos-list">Cargando...</div>
+      <button class="btn btn-negro" onclick="closePedidosModal()">Cerrar</button>
     </div>
-
-    <div class="pedidos-list" id="pedidos-list">Cargando...</div>
-    <button class="btn-admin-close" onclick="closePedidosModal()">Cerrar</button>
   </div>
 </div>
 
 <div class="modal-overlay form-espera-modal" id="form-espera-overlay">
   <div class="modal">
-    <div class="admin-title" id="titulo-espera">Guardar Pedido</div>
-    <div class="form-espera-field">
-      <label>Nombre del Cliente</label>
-      <input id="input-espera-nombre" readonly placeholder="Toca para escribir texto" onclick="openVKB('input-espera-nombre')">
-    </div>
-    <div class="form-espera-field">
-      <label>Teléfono (Opcional)</label>
-      <input id="input-espera-tel" readonly placeholder="Toca para abrir teclado numérico" onclick="abrirNumpadTelefono()">
-    </div>
-    <div class="form-espera-field">
-      <label>Hora de Recogida (Opcional)</label>
-      <input id="input-espera-hora" readonly placeholder="Toca para establecer hora" onclick="abrirSelectorHora()">
-    </div>
-    <div class="edit-actions">
-      <button class="btn-edit-cancel" onclick="closeModalEspera()">Cancelar</button>
-      <button class="btn-edit-save" onclick="guardarPedidoEspera()">✔ Guardar</button>
+    <div class="modal-cuerpo" style="gap:16px">
+      <div>
+        <h2 class="modal-tit" id="titulo-espera">Guardar pedido</h2>
+        <p id="espera-resumen" style="margin-top:4px;color:#4A4A4A;font-size:15px"></p>
+      </div>
+      <div class="campo">
+        <label for="input-espera-nombre">Nombre del cliente</label>
+        <input id="input-espera-nombre" readonly placeholder="Toca para escribir" onclick="openVKB('input-espera-nombre')">
+      </div>
+      <div class="campo">
+        <label for="input-espera-tel">Teléfono (opcional)</label>
+        <input id="input-espera-tel" readonly placeholder="Toca para abrir el teclado" onclick="abrirNumpadTelefono()">
+      </div>
+      <div class="campo">
+        <label for="input-espera-hora">Hora de recogida (opcional)</label>
+        <input id="input-espera-hora" readonly placeholder="Toca para poner la hora" onclick="abrirSelectorHora()" style="font-family:var(--display);font-size:24px;font-weight:700">
+      </div>
+      <div class="modal-acciones">
+        <button class="btn" onclick="closeModalEspera()">Cancelar</button>
+        <button class="btn btn-rojo" onclick="guardarPedidoEspera()">Guardar en espera</button>
+      </div>
     </div>
   </div>
 </div>
 
 <div class="modal-overlay stats-modal" id="stats-overlay">
-  <div class="modal" style="width:900px; max-width:98vw; padding:24px; display:flex; flex-direction:column; max-height:95vh;">
-    <div class="admin-title">📈 Estadísticas de Ventas</div>
-    
-    <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
-      <button class="stat-btn active" id="btn-st-hoy" onclick="setStatRango(0, 'hoy')">Hoy</button>
-      <button class="stat-btn" id="btn-st-sem" onclick="setStatRango(6, 'sem')">7 Días</button>
-      <button class="stat-btn" id="btn-st-mes" onclick="setStatRango(29, 'mes')">30 Días</button>
-      <button class="stat-btn" id="btn-st-todo" onclick="setStatRango(9999, 'todo')">Desde el inicio</button>
-      
-      <div style="flex:1"></div>
-      
-      <input type="date" id="stat-desde" class="stat-date" onchange="customStatDate()">
-      <span style="align-self:center; font-weight:bold;">hasta</span>
-      <input type="date" id="stat-hasta" class="stat-date" onchange="customStatDate()">
+  <div class="modal">
+    <div class="modal-cuerpo">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <h2 class="modal-tit" style="margin-right:auto">Estadísticas</h2>
+        <button class="stat-btn active" id="btn-st-hoy" onclick="setStatRango(0, 'hoy')">Hoy</button>
+        <button class="stat-btn" id="btn-st-sem" onclick="setStatRango(6, 'sem')">7 días</button>
+        <button class="stat-btn" id="btn-st-mes" onclick="setStatRango(29, 'mes')">30 días</button>
+        <button class="stat-btn" id="btn-st-todo" onclick="setStatRango(9999, 'todo')">Desde el inicio</button>
+      </div>
+      <div class="filtros">
+        <div class="campo"><label for="stat-desde">Desde</label><input type="date" id="stat-desde" onchange="customStatDate()"></div>
+        <div class="campo"><label for="stat-hasta">Hasta</label><input type="date" id="stat-hasta" onchange="customStatDate()"></div>
+        <div class="campo"><label for="stat-f-cat">Categoría</label>
+          <select id="stat-f-cat" onchange="updateStatProdFilter(); runStats();"><option>Todas</option></select></div>
+        <div class="campo"><label for="stat-f-prod">Plato</label>
+          <select id="stat-f-prod" onchange="runStats()"><option>Todos</option></select></div>
+        <div class="campo"><label for="stat-group">Agrupar por</label>
+          <select id="stat-group" onchange="runStats()">
+            <option value="cat_prod">Categoría y platos</option>
+            <option value="cat">Solo categorías</option>
+            <option value="prod">Solo platos</option>
+          </select></div>
+        <div style="display:flex;gap:14px;margin-left:auto;padding-bottom:12px">
+          <label class="check"><input type="checkbox" id="stat-show-qty" checked onchange="runStats()">Unidades</label>
+          <label class="check"><input type="checkbox" id="stat-show-rev" checked onchange="runStats()">Euros</label>
+        </div>
+      </div>
+      <div class="lista" id="stats-list"></div>
+      <button class="btn btn-negro" onclick="closeStats()">Cerrar</button>
     </div>
-
-    <div style="background:#f1f5f9; padding:15px; border-radius:12px; display:flex; gap:15px; flex-wrap:wrap; margin-bottom:15px; align-items:flex-end;">
-      <div class="admin-field">
-        <label>Categoría</label>
-        <select id="stat-f-cat" onchange="updateStatProdFilter(); runStats();"><option>Todas</option></select>
-      </div>
-      <div class="admin-field">
-        <label>Plato exacto</label>
-        <select id="stat-f-prod" onchange="runStats()"><option>Todos</option></select>
-      </div>
-      <div class="admin-field">
-        <label>Agrupar por</label>
-        <select id="stat-group" onchange="runStats()">
-          <option value="cat_prod">Categoría ➞ Platos</option>
-          <option value="cat">Solo Categorías</option>
-          <option value="prod">Solo Platos</option>
-        </select>
-      </div>
-      <div style="display:flex; gap:12px; align-items:center; padding-bottom:12px; margin-left: auto;">
-        <label style="display:flex; align-items:center; gap:5px; font-weight:bold; cursor:pointer; font-size:15px;">
-          <input type="checkbox" id="stat-show-qty" checked onchange="runStats()" style="width:20px;height:20px;"> Cantidad
-        </label>
-        <label style="display:flex; align-items:center; gap:5px; font-weight:bold; cursor:pointer; font-size:15px;">
-          <input type="checkbox" id="stat-show-rev" checked onchange="runStats()" style="width:20px;height:20px;"> Dinero (€)
-        </label>
-      </div>
-    </div>
-
-    <div class="pedidos-list" style="flex:1; margin-top:0;" id="stats-list"></div>
-    <button class="btn-admin-close" onclick="closeStats()">Cerrar</button>
   </div>
 </div>
 
 <div class="modal-overlay cierre-modal" id="cierre-overlay">
   <div class="modal">
-    <div class="admin-title">🔒 Arqueo y Cierre de Caja</div>
-    
     <div class="cierre-grid">
-      <div class="cierre-panel">
-        <h3 style="margin-bottom: 15px; color:#1e293b;">Billetes y Monedas en Cajón</h3>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
-          <div>
-            <div class="cierre-row">50 € <div class="input-wrapper"><span style="margin-right:10px;">x</span> <button class="btn-step" onclick="stepCierre('50', -1)">−</button><input type="number" id="c-50" value="0" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('50', 1)">+</button></div></div>
-            <div class="cierre-row">20 € <div class="input-wrapper"><span style="margin-right:10px;">x</span> <button class="btn-step" onclick="stepCierre('20', -1)">−</button><input type="number" id="c-20" value="0" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('20', 1)">+</button></div></div>
-            <div class="cierre-row">10 € <div class="input-wrapper"><span style="margin-right:10px;">x</span> <button class="btn-step" onclick="stepCierre('10', -1)">−</button><input type="number" id="c-10" value="0" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('10', 1)">+</button></div></div>
-            <div class="cierre-row">5 € <div class="input-wrapper"><span style="margin-right:10px;">x</span> <button class="btn-step" onclick="stepCierre('5', -1)">−</button><input type="number" id="c-5" value="0" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('5', 1)">+</button></div></div>
-            <div class="cierre-row">2 € <div class="input-wrapper"><span style="margin-right:10px;">x</span> <button class="btn-step" onclick="stepCierre('2', -1)">−</button><input type="number" id="c-2" value="0" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('2', 1)">+</button></div></div>
-            <div class="cierre-row">1 € <div class="input-wrapper"><span style="margin-right:10px;">x</span> <button class="btn-step" onclick="stepCierre('1', -1)">−</button><input type="number" id="c-1" value="0" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('1', 1)">+</button></div></div>
-          </div>
-          <div>
-            <div class="cierre-row">0.50 € <div class="input-wrapper"><span style="margin-right:10px;">x</span> <button class="btn-step" onclick="stepCierre('050', -1)">−</button><input type="number" id="c-050" value="0" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('050', 1)">+</button></div></div>
-            <div class="cierre-row">0.20 € <div class="input-wrapper"><span style="margin-right:10px;">x</span> <button class="btn-step" onclick="stepCierre('020', -1)">−</button><input type="number" id="c-020" value="0" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('020', 1)">+</button></div></div>
-            <div class="cierre-row">0.10 € <div class="input-wrapper"><span style="margin-right:10px;">x</span> <button class="btn-step" onclick="stepCierre('010', -1)">−</button><input type="number" id="c-010" value="0" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('010', 1)">+</button></div></div>
-            <div class="cierre-row">0.05 € <div class="input-wrapper"><span style="margin-right:10px;">x</span> <button class="btn-step" onclick="stepCierre('005', -1)">−</button><input type="number" id="c-005" value="0" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('005', 1)">+</button></div></div>
-            <div class="cierre-row">0.02 € <div class="input-wrapper"><span style="margin-right:10px;">x</span> <button class="btn-step" onclick="stepCierre('002', -1)">−</button><input type="number" id="c-002" value="0" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('002', 1)">+</button></div></div>
-            <div class="cierre-row">0.01 € <div class="input-wrapper"><span style="margin-right:10px;">x</span> <button class="btn-step" onclick="stepCierre('001', -1)">−</button><input type="number" id="c-001" value="0" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('001', 1)">+</button></div></div>
-          </div>
+      <div class="cierre-izq">
+        <div style="display:flex;align-items:baseline;gap:14px">
+          <h2 class="modal-tit">Arqueo y cierre de caja</h2>
+          <span style="font-size:14px;color:var(--texto-2);font-weight:600">Cuenta lo que hay en el cajón</span>
         </div>
+        <div class="billetes">
+          <div class="den"><b>50 €</b><button class="btn-step" onclick="stepCierre('50', -1)" aria-label="Uno menos de 50 €">−</button><input type="number" class="cant" id="c-50" value="0" aria-label="Billetes de 50 €" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('50', 1)" aria-label="Uno más de 50 €">+</button></div>
+          <div class="den"><b>20 €</b><button class="btn-step" onclick="stepCierre('20', -1)" aria-label="Uno menos de 20 €">−</button><input type="number" class="cant" id="c-20" value="0" aria-label="Billetes de 20 €" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('20', 1)" aria-label="Uno más de 20 €">+</button></div>
+          <div class="den"><b>10 €</b><button class="btn-step" onclick="stepCierre('10', -1)" aria-label="Uno menos de 10 €">−</button><input type="number" class="cant" id="c-10" value="0" aria-label="Billetes de 10 €" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('10', 1)" aria-label="Uno más de 10 €">+</button></div>
+          <div class="den"><b>5 €</b><button class="btn-step" onclick="stepCierre('5', -1)" aria-label="Uno menos de 5 €">−</button><input type="number" class="cant" id="c-5" value="0" aria-label="Billetes de 5 €" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('5', 1)" aria-label="Uno más de 5 €">+</button></div>
+          <div class="den"><b>2 €</b><button class="btn-step" onclick="stepCierre('2', -1)" aria-label="Una menos de 2 €">−</button><input type="number" class="cant" id="c-2" value="0" aria-label="Monedas de 2 €" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('2', 1)" aria-label="Una más de 2 €">+</button></div>
+          <div class="den"><b>1 €</b><button class="btn-step" onclick="stepCierre('1', -1)" aria-label="Una menos de 1 €">−</button><input type="number" class="cant" id="c-1" value="0" aria-label="Monedas de 1 €" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('1', 1)" aria-label="Una más de 1 €">+</button></div>
+          <div class="den"><b>0,50 €</b><button class="btn-step" onclick="stepCierre('050', -1)" aria-label="Una menos de 50 céntimos">−</button><input type="number" class="cant" id="c-050" value="0" aria-label="Monedas de 50 céntimos" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('050', 1)" aria-label="Una más de 50 céntimos">+</button></div>
+          <div class="den"><b>0,20 €</b><button class="btn-step" onclick="stepCierre('020', -1)" aria-label="Una menos de 20 céntimos">−</button><input type="number" class="cant" id="c-020" value="0" aria-label="Monedas de 20 céntimos" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('020', 1)" aria-label="Una más de 20 céntimos">+</button></div>
+          <div class="den"><b>0,10 €</b><button class="btn-step" onclick="stepCierre('010', -1)" aria-label="Una menos de 10 céntimos">−</button><input type="number" class="cant" id="c-010" value="0" aria-label="Monedas de 10 céntimos" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('010', 1)" aria-label="Una más de 10 céntimos">+</button></div>
+          <div class="den"><b>0,05 €</b><button class="btn-step" onclick="stepCierre('005', -1)" aria-label="Una menos de 5 céntimos">−</button><input type="number" class="cant" id="c-005" value="0" aria-label="Monedas de 5 céntimos" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('005', 1)" aria-label="Una más de 5 céntimos">+</button></div>
+          <div class="den"><b>0,02 €</b><button class="btn-step" onclick="stepCierre('002', -1)" aria-label="Una menos de 2 céntimos">−</button><input type="number" class="cant" id="c-002" value="0" aria-label="Monedas de 2 céntimos" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('002', 1)" aria-label="Una más de 2 céntimos">+</button></div>
+          <div class="den"><b>0,01 €</b><button class="btn-step" onclick="stepCierre('001', -1)" aria-label="Una menos de 1 céntimo">−</button><input type="number" class="cant" id="c-001" value="0" aria-label="Monedas de 1 céntimo" onclick="this.select()" oninput="calcCierre()"><button class="btn-step" onclick="stepCierre('001', 1)" aria-label="Una más de 1 céntimo">+</button></div>
+        </div>
+        <div class="cierre-contado"><span>Total contado</span><b id="c-real">0,00 €</b></div>
       </div>
-
-      <div class="cierre-panel">
-        <div class="cierre-row" style="color:#000;">Fondo Inicial en Caja: 
-          <div class="input-wrapper"><input type="number" id="c-fondo" value="50" step="0.01" onclick="this.select()" oninput="calcCierre()" style="width:140px;"> <span style="margin-left:5px;">€</span></div>
+      <div class="cierre-der">
+        <div class="cierre-resumen">
+          <div class="c-fila"><label for="c-fondo">Fondo inicial</label>
+            <span style="display:flex;align-items:center;gap:6px"><input type="number" class="cant" id="c-fondo" value="50" step="0.01" style="width:96px" onclick="this.select()" oninput="calcCierre()"><b>€</b></span></div>
+          <div class="c-fila mas"><span>+ Ventas en efectivo</span><b id="c-ventas-ef">0,00 €</b></div>
+          <div class="c-fila mas"><span>+ Entradas de caja</span><b id="c-entradas">0,00 €</b></div>
+          <div class="c-fila menos"><span>− Salidas de caja</span><b id="c-salidas">0,00 €</b></div>
+          <div class="c-fila teorico"><span style="font-weight:700">Debería haber</span><b id="c-teorico">0,00 €</b></div>
         </div>
-        <div class="cierre-row" style="color:#16a34a;">+ Ventas en Efectivo: <span id="c-ventas-ef">0.00 €</span></div>
-        <div class="cierre-row" style="color:#16a34a;">+ Entradas de Caja: <span id="c-entradas">0.00 €</span></div>
-        <div class="cierre-row" style="color:#ef4444;">− Salidas de Caja: <span id="c-salidas">0.00 €</span></div>
-        
-        <div class="cierre-totales">
-          <div class="c-total">Teórico en Caja: <span id="c-teorico">0.00 €</span></div>
-          <div class="c-total" style="color:#2563eb;">Total Contado (Real): <span id="c-real">0.00 €</span></div>
+        <div class="cierre-descuadre ok" id="c-descuadre"><span>Descuadre</span><b>0,00 € · Cuadra</b></div>
+        <div class="cierre-tarjeta">
+          <div class="c-fila"><span>Pagos con tarjeta</span><b id="c-ventas-tj">0,00 €</b></div>
+          <div class="c-fila"><span style="font-weight:700">Total facturado</span><b id="c-ventas-total">0,00 €</b></div>
         </div>
-        
-        <div class="cierre-descuadre ok" id="c-descuadre">Descuadre: 0.00 €</div>
-
-        <div class="cierre-tarjeta-box">
-          <div class="c-total" style="font-size:22px;">💳 Pagos con Tarjeta: <span id="c-ventas-tj">0.00 €</span></div>
-          <div class="c-total" style="font-size:22px; margin-top:12px;">💰 TOTAL FACTURADO: <span id="c-ventas-total">0.00 €</span></div>
-        </div>
-
-        <div style="display:flex; gap:15px; margin-top:25px;">
-          <button class="btn-admin-close" style="margin:0; flex:1; font-size:20px; padding:18px;" onclick="closeCierre()">Cancelar</button>
-          <button class="btn-edit-save" style="margin:0; flex:1; font-size:20px; padding:18px;" onclick="guardarCierre()">Guardar Cierre</button>
+        <div style="display:grid;grid-template-columns:1fr 1.5fr;gap:10px;margin-top:auto">
+          <button class="btn" style="height:58px" onclick="closeCierre()">Cancelar</button>
+          <button class="btn btn-rojo" style="height:58px;font-size:20px" onclick="guardarCierre()">Guardar e imprimir</button>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<div class="modal-overlay form-espera-modal" id="mov-overlay">
-  <div class="modal" style="width:560px;">
-    <div class="admin-title">💸 Entradas y Salidas de Caja</div>
-    <div class="pay-tabs">
-      <button class="pay-tab tab-entrada active" onclick="setMovTipo('entrada')">➕ Entrada de dinero</button>
-      <button class="pay-tab tab-salida" onclick="setMovTipo('salida')">➖ Salida de dinero</button>
+<div class="modal-overlay mov-modal" id="mov-overlay">
+  <div class="modal">
+    <div class="mov-cuerpo">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <h2 class="modal-tit">Entradas y salidas</h2>
+        <div class="mov-tabs">
+          <button class="pay-tab tab-entrada active" onclick="setMovTipo('entrada')">+ Entrada de dinero</button>
+          <button class="pay-tab tab-salida" onclick="setMovTipo('salida')">− Salida de dinero</button>
+        </div>
+        <div class="campo">
+          <label for="mov-importe">Importe</label>
+          <input id="mov-importe" readonly placeholder="Toca para poner el importe" style="font-family:var(--display);font-size:26px;font-weight:700"
+                 onclick="openNumpad('Importe del movimiento',function(v){document.getElementById('mov-importe').value=v.replace('.',',')})">
+        </div>
+        <div class="campo">
+          <label for="mov-concepto">Concepto</label>
+          <input id="mov-concepto" readonly placeholder="Ej: pago proveedor, cambio..." onclick="openVKB('mov-concepto')">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1.8fr;gap:10px;margin-top:auto">
+          <button class="btn" onclick="closeMovimientos()">Cerrar</button>
+          <button class="btn btn-rojo" id="btn-mov-guardar" onclick="guardarMovimiento()">Registrar y abrir cajón</button>
+        </div>
+      </div>
+      <div class="mov-lado">
+        <div class="etq">Hoy</div>
+        <div id="mov-resumen"></div>
+        <div class="lista" id="mov-list"></div>
+        <p style="margin-top:auto;font-size:14px;color:#4A4A4A">Estos movimientos se suman o restan en el cierre de caja.</p>
+      </div>
     </div>
-    <div class="form-espera-field">
-      <label>Importe (€)</label>
-      <input id="mov-importe" readonly placeholder="Toca para introducir el importe" onclick="openNumpad('Importe del movimiento',function(v){document.getElementById('mov-importe').value=v})">
+  </div>
+</div>
+
+<div class="modal-overlay confirm-modal" id="confirm-overlay">
+  <div class="modal" role="alertdialog" aria-labelledby="confirm-titulo" aria-describedby="confirm-mensaje">
+    <div class="modal-cuerpo">
+      <h2 class="modal-tit" id="confirm-titulo" style="font-size:28px">¿Seguro?</h2>
+      <p id="confirm-mensaje"></p>
+      <div id="confirm-detalle"></div>
+      <div class="modal-acciones" style="grid-template-columns:1fr 1.4fr;margin-top:6px">
+        <button class="btn" id="confirm-no" onclick="responderConfirmacion(false)">No, volver</button>
+        <button class="btn btn-rojo" id="confirm-si" onclick="responderConfirmacion(true)">Sí</button>
+      </div>
     </div>
-    <div class="form-espera-field">
-      <label>Concepto</label>
-      <input id="mov-concepto" readonly placeholder="Ej: Pago proveedor, cambio..." onclick="openVKB('mov-concepto')">
-    </div>
-    <div class="edit-actions">
-      <button class="btn-edit-cancel" onclick="closeMovimientos()">Cerrar</button>
-      <button class="btn-edit-save" id="btn-mov-guardar" onclick="guardarMovimiento()">✔ Registrar y abrir cajón</button>
-    </div>
-    <div class="ventas-summary" id="mov-resumen" style="margin-top:20px;"></div>
-    <div class="pedidos-list" id="mov-list" style="max-height:260px; margin-top:0;"></div>
   </div>
 </div>
 
 <div class="vkb-overlay" id="vkb-overlay">
   <div class="vkb">
-    <div class="vkb-display" id="vkb-display"></div>
-    <div id="vkb-keys"></div>
+    <div class="vkb-cuerpo">
+      <div class="vkb-display" id="vkb-display"></div>
+      <div id="vkb-keys"></div>
+    </div>
   </div>
 </div>
 
-<div id="toast"></div>
+<div id="toast" role="status" aria-live="polite"></div>
 
 <script>
 /* === STATE === */
@@ -727,7 +795,7 @@ let payMode = "efectivo";
 let payVals = {ef:"0", mx:"0"};
 let editIdx = -1;
 let editRemovals = [], editExtras = [], editNotes = "";
-let editPrecioBaseTemporal = 0; 
+let editPrecioBaseTemporal = 0;
 let contadorVarios = -1;
 
 const EXTRA_PRICE = 0.80;
@@ -750,8 +818,8 @@ async function loadProducts(){
 let activeCat="Todos";
 let activeSubCat="Todos";
 
-function getParentCats(){ 
-  return [...new Set(productos.map(p => p.categoria.split('/')[0].trim()))]; 
+function getParentCats(){
+  return [...new Set(productos.map(p => p.categoria.split('/')[0].trim()))];
 }
 
 function getSubCats(parent){
@@ -780,9 +848,9 @@ function renderSubCats(){
   el.innerHTML = html;
 }
 
-function setCat(c){ 
+function setCat(c){
   activeCat = c; activeSubCat = "Todos";
-  renderCats(); renderGrid(); 
+  renderCats(); renderGrid();
 }
 
 function setSubCat(sc){
@@ -799,23 +867,30 @@ function renderGrid(){
   document.getElementById("prod-grid").innerHTML=list.map(p=>
     `<button class="prod-btn" onclick="addToOrder(${p.id})">
       <span class="pname">${esc(p.nombre)}</span>
-      <span class="pprice">${p.precio.toFixed(2)} €</span>
+      <span class="pprice">${eur(p.precio)}</span>
     </button>`
   ).join("");
 }
 
 function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 
+// Importe para mostrar en pantalla: 1234.5 -> "1234,50 €"
+function eur(n){ return (Math.abs(n) < 0.005 ? 0 : n).toFixed(2).replace(".", ",") + " €"; }
+// Número tecleado tal como se ve en pantalla (coma decimal)
+function conComa(v){ return String(v).replace(".", ","); }
+// Lee un importe escrito con coma o punto
+function leerImporte(v){ return parseFloat(String(v).replace(",", ".")) || 0; }
+
 /* === ORDER === */
 function addToOrder(id) {
-  const p = productos.find(x => x.id === id); 
+  const p = productos.find(x => x.id === id);
   if (!p) return;
 
-  const indiceExistente = order.findIndex(item => 
-    item.id === id && 
-    item.removals.length === 0 && 
-    item.extras.length === 0 && 
-    item.notes === "" && 
+  const indiceExistente = order.findIndex(item =>
+    item.id === id &&
+    item.removals.length === 0 &&
+    item.extras.length === 0 &&
+    item.notes === "" &&
     item.precioBase === p.precio
   );
 
@@ -832,12 +907,12 @@ function addToOrder(id) {
 function anadirVarios() {
   openNumpad("Precio del producto extra", function(v) {
     const precio = parseFloat(v);
-    if (precio <= 0) return; 
+    if (precio <= 0) return;
     order.push({
-      id: contadorVarios, nombre: "Varios", precioBase: precio, qty: 1, removals: [], extras: [], notes: "" 
+      id: contadorVarios, nombre: "Varios", precioBase: precio, qty: 1, removals: [], extras: [], notes: ""
     });
-    contadorVarios--; 
-    renderOrder();    
+    contadorVarios--;
+    renderOrder();
     toast("✅ Varios añadido");
   }, false);
 }
@@ -846,7 +921,7 @@ function getModsText(it){
   let parts=[];
   (it.removals||[]).forEach(r=>parts.push(r));
   (it.extras||[]).forEach(e=>parts.push(e+" +0,80€"));
-  if(it.notes) parts.push("📝 "+it.notes);
+  if(it.notes) parts.push("Nota: "+it.notes);
   return parts.join(" · ");
 }
 
@@ -859,32 +934,36 @@ function renderOrder(){
       const mods = getModsText(it);
       return `<div class="order-item">
         <div class="oi-info" onclick="openEdit(${i})">
-          <span class="oi-name">✏️ ${esc(it.nombre)}</span>
+          <span class="oi-name">${esc(it.nombre)}</span>
           ${mods?'<span class="oi-mods">'+esc(mods)+'</span>':""}
         </div>
         <span class="oi-qty">
-          <button class="oi-minus" onclick="oqty(${i},-1)">−</button>
+          <button class="oi-minus" onclick="oqty(${i},-1)" aria-label="Quitar uno">−</button>
           <span class="oi-qval">${it.qty}</span>
-          <button class="oi-plus" onclick="oqty(${i},1)">+</button>
+          <button class="oi-plus" onclick="oqty(${i},1)" aria-label="Añadir uno">+</button>
         </span>
-        <span class="oi-sub">${(up*it.qty).toFixed(2)} €</span>
-        <button class="oi-del" onclick="odel(${i})">✕</button>
+        <span class="oi-sub">${eur(up*it.qty)}</span>
+        <button class="oi-del" onclick="odel(${i})" aria-label="Eliminar línea"><svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
       </div>`;
     }).join("");
   }
-  
+
   const total=getTotal();
-  document.getElementById("order-total").textContent="TOTAL: "+total.toFixed(2)+" €";
-  
+  document.getElementById("order-total-val").textContent=eur(total);
+  const articulos = order.reduce((s,x) => s + (parseInt(x.qty) || 0), 0);
+  document.getElementById("order-count").textContent = articulos ? articulos + (articulos === 1 ? " artículo" : " artículos") : "";
+
   const hasItems = order.length > 0;
   document.getElementById("btn-cobrar").disabled = !hasItems;
   document.getElementById("btn-comanda").disabled = !hasItems;
   document.getElementById("btn-espera").disabled = !hasItems;
-  
+
   const banner = document.getElementById("pedido-loaded-banner");
   if (currentPedidoId) {
     banner.style.display = "block";
-    banner.textContent = `Modificando Pedido #${currentPedidoId}`;
+    const nombre = document.getElementById("input-espera-nombre").value.trim();
+    const hora = document.getElementById("input-espera-hora").value.trim();
+    banner.textContent = `Modificando pedido #${currentPedidoId}` + (nombre ? ` · ${nombre}` : "") + (hora ? ` · recoger ${hora}` : "");
   } else {
     banner.style.display = "none";
   }
@@ -904,17 +983,17 @@ function getSafeItemPrice(it) {
     return pBase + (nx * EXTRA_PRICE);
 }
 
-function getTotal(){ 
-    return order.reduce((s,x) => s + (getSafeItemPrice(x) * x.qty), 0); 
+function getTotal(){
+    return order.reduce((s,x) => s + (getSafeItemPrice(x) * x.qty), 0);
 }
 
 /* === EDIT ITEM === */
 function openEdit(i){
   editIdx=i; const it=order[i];
   editRemovals=[...it.removals]; editExtras=[...it.extras]; editNotes=it.notes;
-  editPrecioBaseTemporal=it.precioBase; 
-  document.getElementById("edit-title").textContent="✏️ "+it.nombre;
-  document.getElementById("edit-base-price").innerHTML="✏️ Precio base: "+it.precioBase.toFixed(2)+" €";
+  editPrecioBaseTemporal=it.precioBase;
+  document.getElementById("edit-title").textContent=it.nombre;
+  document.getElementById("edit-base-price").textContent="Precio base: "+eur(it.precioBase);
   document.getElementById("edit-notes-input").value=editNotes;
   renderEditToggles(); updateEditPrice();
   document.getElementById("edit-overlay").classList.add("open");
@@ -948,7 +1027,7 @@ function editarPrecioBase() {
     const p = parseFloat(v);
     if (p >= 0) {
       editPrecioBaseTemporal = p;
-      document.getElementById("edit-base-price").innerHTML = "✏️ Precio base: " + p.toFixed(2) + " €";
+      document.getElementById("edit-base-price").textContent = "Precio base: " + eur(p);
       updateEditPrice();
     }
   }, false);
@@ -956,14 +1035,14 @@ function editarPrecioBase() {
 
 function updateEditPrice(){
   const p = editPrecioBaseTemporal + editExtras.length * EXTRA_PRICE;
-  document.getElementById("edit-final-price").textContent = "Precio Total: " + p.toFixed(2) + " €";
+  document.getElementById("edit-final-price").textContent = eur(p);
 }
 
 function saveEdit(){
   order[editIdx].removals=[...editRemovals];
   order[editIdx].extras=[...editExtras];
   order[editIdx].notes=document.getElementById("edit-notes-input").value.trim();
-  order[editIdx].precioBase = editPrecioBaseTemporal; 
+  order[editIdx].precioBase = editPrecioBaseTemporal;
   closeEdit(); renderOrder();
 }
 function closeEdit(){ document.getElementById("edit-overlay").classList.remove("open"); }
@@ -994,11 +1073,16 @@ function abrirSelectorHora() {
 
 function openNumpad(title, cb, isString = false) {
   npIsString = isString;
-  npValue = isString ? "" : "0"; 
+  npValue = isString ? "" : "0";
   npCallback = cb;
   document.getElementById("numpad-title").textContent = title;
-  document.getElementById("numpad-display").textContent = npValue || "0";
+  mostrarNumpad();
   document.getElementById("numpad-overlay").classList.add("open");
+}
+
+function mostrarNumpad() {
+  const v = npValue || "0";
+  document.getElementById("numpad-display").textContent = npIsString ? v : conComa(v);
 }
 
 function npPress(c) {
@@ -1007,43 +1091,43 @@ function npPress(c) {
      if (npValue === "0" && c !== "." && !npIsString) npValue = c;
      else { if (c === "." && npValue.includes(".")) return; npValue += c; }
   }
-  document.getElementById("numpad-display").textContent = npValue;
+  mostrarNumpad();
 }
 
 function npBack() {
   npValue = npValue.slice(0, -1);
   if (!npIsString && !npValue) npValue = "0";
-  document.getElementById("numpad-display").textContent = npValue || "0";
+  mostrarNumpad();
 }
 function npClear() {
   npValue = npIsString ? "" : "0";
-  document.getElementById("numpad-display").textContent = npIsString ? "0" : "0";
+  mostrarNumpad();
 }
 function npConfirm() {
   document.getElementById("numpad-overlay").classList.remove("open");
   if (npIsString) {
-    if (npCallback) npCallback(npValue); 
+    if (npCallback) npCallback(npValue);
   } else {
     const v = parseFloat(npValue) || 0;
-    if (npCallback) npCallback(v.toFixed(2)); 
+    if (npCallback) npCallback(v.toFixed(2));
   }
 }
 
 /* === PAYMENT MODAL === */
 function openPay(){
   payVals={ef:"0",mx:"0"}; payMode="efectivo";
-  document.getElementById("pay-total").textContent=getTotal().toFixed(2)+" €";
-  document.getElementById("pay-card-total").textContent=getTotal().toFixed(2)+" €";
+  document.getElementById("pay-total").textContent=eur(getTotal());
+  document.getElementById("pay-card-total").textContent=eur(getTotal());
   document.getElementById("pay-cash-ef").textContent="0";
   document.getElementById("pay-cash-mx").textContent="0";
-  document.getElementById("pay-card-mx").textContent=getTotal().toFixed(2)+" €";
+  document.getElementById("pay-card-mx").textContent=eur(getTotal());
   setPayTab("efectivo");
   document.getElementById("pay-overlay").classList.add("open");
 }
 function closePay(){ document.getElementById("pay-overlay").classList.remove("open"); }
 function setPayTab(mode){
   payMode=mode;
-  document.querySelectorAll(".pay-tab").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll("#pay-overlay .pay-tab").forEach(t=>t.classList.remove("active"));
   document.querySelector(".tab-"+mode).classList.add("active");
   document.querySelectorAll(".pay-section").forEach(s=>s.classList.remove("active"));
   document.getElementById("pay-sec-"+mode).classList.add("active");
@@ -1052,13 +1136,13 @@ function setPayTab(mode){
 function payNp(c,t){
   if(payVals[t]==="0"&&c!==".") payVals[t]=c;
   else{if(c==="."&&payVals[t].includes(".")) return; payVals[t]+=c;}
-  document.getElementById("pay-cash-"+t).textContent=payVals[t]; updatePayState();
+  document.getElementById("pay-cash-"+t).textContent=conComa(payVals[t]); updatePayState();
 }
 function payQuick(v){
   payVals.ef = v==="exacto" ? getTotal().toFixed(2) : String(v);
-  document.getElementById("pay-cash-ef").textContent=payVals.ef; updatePayState();
+  document.getElementById("pay-cash-ef").textContent=conComa(payVals.ef); updatePayState();
 }
-function payNpBack(t){ payVals[t]=payVals[t].slice(0,-1)||"0"; document.getElementById("pay-cash-"+t).textContent=payVals[t]; updatePayState(); }
+function payNpBack(t){ payVals[t]=payVals[t].slice(0,-1)||"0"; document.getElementById("pay-cash-"+t).textContent=conComa(payVals[t]); updatePayState(); }
 function payNpClear(t){ payVals[t]="0"; document.getElementById("pay-cash-"+t).textContent="0"; updatePayState(); }
 function updatePayState(){
   const total=getTotal();
@@ -1067,7 +1151,7 @@ function updatePayState(){
     const cash=parseFloat(payVals.ef)||0;
     const change=cash-total;
     const el=document.getElementById("pay-change-ef");
-    el.textContent="Cambio: "+(change>=0?"+":"")+change.toFixed(2)+" €";
+    el.innerHTML="<span>Cambio</span><b>"+(change>0.004?"+":"")+eur(change)+"</b>";
     el.className="pay-change "+(change>=0?"positive":"negative");
     canPay=change>=0;
   } else if(payMode==="tarjeta"){
@@ -1075,7 +1159,7 @@ function updatePayState(){
   } else {
     const cashPart=Math.min(parseFloat(payVals.mx)||0, total);
     const cardPart=Math.max(total-cashPart,0);
-    document.getElementById("pay-card-mx").textContent=cardPart.toFixed(2)+" €";
+    document.getElementById("pay-card-mx").textContent=eur(cardPart);
     canPay=(cashPart+cardPart)>=total-0.001;
   }
   document.getElementById("btn-pay-confirm").disabled=!canPay || cobrando;
@@ -1086,7 +1170,7 @@ async function confirmPay(){
   if(cobrando) return;
   const total=getTotal();
   let pagado_efectivo=0, pagado_tarjeta=0, cambio=0, metodo=payMode;
-  
+
   if(payMode==="efectivo"){
     pagado_efectivo=parseFloat(payVals.ef)||0;
     cambio=pagado_efectivo-total;
@@ -1220,28 +1304,28 @@ function showReceipt(items, total, efect, tarj, cambio, metodo, ts, pedido, anul
     }
     h += `<div class="rc-center">${esc(ts)}</div>`;
     h += '<div class="rc-line"></div>';
-    
+
     // Eliminado el bloque de datos del cliente/pedido
-    
+
     items.forEach(it => {
         let pu = parseFloat(it.precioUnit);
         if(isNaN(pu)) pu = getSafeItemPrice(it); // Máxima seguridad
-        
+
         const qty = parseInt(it.qty) || 1;
         const lineTotal = (pu * qty).toFixed(2);
-        
+
         h += `<div class="rc-row"><span>${qty}x ${esc(it.nombre)}</span><span>${lineTotal} €</span></div>`;
-        
+
         let mods = [];
         (it.removals || []).forEach(r => mods.push("  " + r));
         (it.extras || []).forEach(e => mods.push("  " + e + " +0,80€"));
-        if (it.notes) mods.push("  📝 " + it.notes);
+        if (it.notes) mods.push("  Nota: " + it.notes);
         if (mods.length) h += '<div class="rc-mods">' + mods.map(m => esc(m)).join("<br>") + '</div>';
     });
 
     h += '<div class="rc-line"></div>';
     h += `<div class="rc-total-row"><span>TOTAL (IVA incl.)</span><span>${totalNum.toFixed(2)} €</span></div>`;
-    
+
     h += '<div style="margin-top: 5px; font-size: 11px;">';
     h += `<div class="rc-row"><span>Base Imponible (10%):</span><span>${baseImponible.toFixed(2)} €</span></div>`;
     h += `<div class="rc-row"><span>Cuota IVA:</span><span>${cuotaIva.toFixed(2)} €</span></div>`;
@@ -1265,7 +1349,8 @@ function showReceipt(items, total, efect, tarj, cambio, metodo, ts, pedido, anul
     h += '<div class="rc-line"></div>';
     h += '<div class="rc-center rc-bold" style="margin-top:8px">¡Gracias por su visita!</div>';
     h += '<div style="height: 20px; color: white;">.</div></div>';
-    
+
+    document.getElementById("receipt-cab").textContent = metodo === "anulacion" ? "Ticket de anulación" : "Ticket";
     document.getElementById("receipt-content").innerHTML = h;
     document.getElementById("receipt-overlay").classList.add("open");
 }
@@ -1309,9 +1394,9 @@ async function imprimirComanda() {
 function imprimirComandaNavegador() {
   let h = '<div style="font-family: Arial; padding-bottom: 20px; color: #000;">';
   h += '<div class="rc-center rc-bold" style="font-size:20px; border-bottom:2px solid #000; margin-bottom:10px;">COMANDA COCINA</div>';
-  
+
   if(currentPedidoId) h += `<div class="rc-center rc-bold" style="font-size:16px;">PEDIDO #${currentPedidoId}</div>`;
-  
+
   // Leemos la hora de recogida y, si existe, la ponemos destacada
   const horaRecogida = document.getElementById("input-espera-hora").value.trim();
   if (horaRecogida) {
@@ -1319,7 +1404,7 @@ function imprimirComandaNavegador() {
   } else {
     h += `<div style="margin-bottom:10px;"></div>`;
   }
-  
+
   let ultimaCategoria = "";
 
   order.forEach(it => {
@@ -1329,20 +1414,21 @@ function imprimirComandaNavegador() {
       h += `<div class="rc-center rc-bold" style="font-size:15px; margin-top:16px; margin-bottom:8px; letter-spacing:2px;">---------- ${esc(catName)} ----------</div>`;
       ultimaCategoria = catName;
     }
-    
+
     h += `<div style="font-size:18px; font-weight:bold; margin-top:6px; padding-left:5px;">${it.qty}x ${esc(it.nombre)}</div>`;
-    
+
     let mods = [];
-    (it.removals||[]).forEach(r => mods.push("🚫 " + r));
-    (it.extras||[]).forEach(e => mods.push("➕ " + e));
-    if (it.notes) mods.push("📝 " + it.notes);
-    
+    (it.removals||[]).forEach(r => mods.push("- " + r));
+    (it.extras||[]).forEach(e => mods.push("+ " + e));
+    if (it.notes) mods.push("Nota: " + it.notes);
+
     if (mods.length) h += '<div style="font-size:15px; margin-left:20px; margin-top:4px; margin-bottom:6px; font-weight:bold; line-height:1.4;">' + mods.map(m => esc(m)).join("<br>") + '</div>';
     h += '<div style="border-bottom:1px dashed #bbb; margin:6px 0;"></div>';
   });
-  
+
   h += '</div>';
   ticketActual = null;
+  document.getElementById("receipt-cab").textContent = "Comanda";
   document.getElementById("receipt-content").innerHTML = h;
   document.getElementById("receipt-overlay").classList.add("open");
   setTimeout(() => window.print(), 300);
@@ -1352,12 +1438,12 @@ function imprimirComandaNavegador() {
 function openAdmin(){ renderAdminList(); document.getElementById("admin-overlay").classList.add("open"); }
 function closeAdmin(){ document.getElementById("admin-overlay").classList.remove("open"); }
 function renderAdminList(){
-  let html='<table><tr><th>ID</th><th>Nombre</th><th>Categoría</th><th>Precio</th><th></th></tr>';
+  let html='<table class="tabla"><tr><th>ID</th><th>Nombre</th><th>Categoría</th><th>Precio (toca para cambiar)</th><th></th></tr>';
   productos.forEach(p=>{
     html+=`<tr>
-      <td>${p.id}</td><td>${esc(p.nombre)}</td><td>${esc(p.categoria)}</td>
-      <td><span class="al-price" onclick="editPrice(${p.id})">${p.precio.toFixed(2)} €</span></td>
-      <td><button class="al-del" onclick="delProd(${p.id})">🗑</button></td>
+      <td>${p.id}</td><td style="font-weight:600">${esc(p.nombre)}</td><td>${esc(p.categoria)}</td>
+      <td><button class="al-price" onclick="editPrice(${p.id})">${eur(p.precio)}</button></td>
+      <td style="text-align:right"><button class="btn-papelera" onclick="delProd(${p.id})" aria-label="Eliminar ${esc(p.nombre)}"><svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button></td>
     </tr>`;
   });
   html+="</table>";
@@ -1376,7 +1462,7 @@ async function delProd(id){
 }
 async function adminAdd(){
   const nombre=document.getElementById("adm-name").value.trim();
-  const precio=parseFloat(document.getElementById("adm-price").value)||0;
+  const precio=leerImporte(document.getElementById("adm-price").value);
   const cat=document.getElementById("adm-cat").value;
   if(!nombre){toast("⚠️ Escribe un nombre"); return;}
   if(precio<=0){toast("⚠️ Introduce un precio válido"); return;}
@@ -1391,41 +1477,57 @@ async function adminAdd(){
 async function openVentas(){
   const r=await fetch("/api/ventas"); const ventas=await r.json();
   ventasCache = ventas;
-  // Igual que el servidor: si hay varias ventas en el mismo segundo, las anulaciones cuentan por orden
-  const porAnular = {};
-  ventas.forEach(v => { if (v.metodo_pago === "anulacion") porAnular[v.anula_a] = (porAnular[v.anula_a] || 0) + 1; });
+  // Igual que el servidor: 'anula_a' es "timestamp" o "timestamp#n" (n = posición entre las ventas
+  // de ese mismo segundo). Las anulaciones antiguas sin "#n" cuentan por orden.
+  const marcadas = {}, antiguas = {};
+  ventas.forEach(v => {
+    if (v.metodo_pago !== "anulacion") return;
+    const [ts, n] = (v.anula_a || "").split("#");
+    if (n === undefined) antiguas[ts] = (antiguas[ts] || 0) + 1;
+    else (marcadas[ts] = marcadas[ts] || new Set()).add(parseInt(n));
+  });
+  Object.keys(antiguas).forEach(ts => {
+    const s = marcadas[ts] = marcadas[ts] || new Set();
+    for (let libre = 0, k = 0; k < antiguas[ts]; libre++) if (!s.has(libre)) { s.add(libre); k++; }
+  });
+  const vistas = {};
   const anulada = ventas.map(v => {
-    if (v.metodo_pago === "anulacion" || !porAnular[v.timestamp]) return false;
-    porAnular[v.timestamp]--;
-    return true;
+    if (v.metodo_pago === "anulacion") return false;
+    const n = vistas[v.timestamp] = (vistas[v.timestamp] ?? -1) + 1;
+    v.ocurrencia = n;
+    return !!(marcadas[v.timestamp] && marcadas[v.timestamp].has(n));
   });
   const nv=ventas.filter((v, i) => v.metodo_pago !== "anulacion" && !anulada[i]).length;
 
   const totalDay=ventas.reduce((s,v)=>s+parseFloat(v.total),0);
   const totalEf=ventas.reduce((s,v)=>s+(parseFloat(v.pagado_efectivo||0) - parseFloat(v.cambio||0)),0);
   const totalTj=ventas.reduce((s,v)=>s+parseFloat(v.pagado_tarjeta||0),0);
-  
+
   document.getElementById("ventas-summary").innerHTML=
     `<div class="vs-box"><div class="vs-val">${nv}</div><div class="vs-lbl">Ventas</div></div>
-     <div class="vs-box"><div class="vs-val">${totalDay.toFixed(2)} €</div><div class="vs-lbl">Facturado</div></div>
-     <div class="vs-box"><div class="vs-val">${totalEf.toFixed(2)} €</div><div class="vs-lbl">Efectivo Real</div></div>
-     <div class="vs-box"><div class="vs-val">${totalTj.toFixed(2)} €</div><div class="vs-lbl">Tarjeta</div></div>`;
-  
-  let html='<table><tr><th>Hora</th><th>Items</th><th>Total</th><th>Método</th><th style="text-align:center;">Ticket</th></tr>';
+     <div class="vs-box negra"><div class="vs-val">${eur(totalDay)}</div><div class="vs-lbl">Facturado</div></div>
+     <div class="vs-box"><div class="vs-val">${eur(totalEf)}</div><div class="vs-lbl">Efectivo real</div></div>
+     <div class="vs-box"><div class="vs-val">${eur(totalTj)}</div><div class="vs-lbl">Tarjeta</div></div>`;
+
+  const METODOS = {efectivo: "Efectivo", tarjeta: "Tarjeta", mixto: "Mixto"};
+  let html='<table class="tabla"><tr><th>Hora</th><th>Productos</th><th style="text-align:right">Total</th><th>Pago</th><th style="text-align:right">Ticket</th></tr>';
   ventas.forEach((v, index)=>{
     const hora=(v.timestamp||"").split(" ")[1]||v.timestamp;
-    const items=(v.items||[]).map(x=>x.qty+"x "+x.nombre).join(", ");
     const esAnulacion = v.metodo_pago === "anulacion";
     const yaAnulada = anulada[index];
-    let met = v.metodo_pago||"efectivo";
-    if (esAnulacion) met = "↩️ anulación";
-    else if (yaAnulada) met += " (ANULADA)";
-    const estilo = esAnulacion ? 'style="color:#dc2626;"' : (yaAnulada ? 'style="color:#94a3b8; text-decoration:line-through;"' : "");
+    let items=(v.items||[]).map(x=>x.qty+"x "+x.nombre).join(", ");
+    if (esAnulacion) items = "Anulación de la venta de las " + ((v.anula_a||"").split("#")[0].split(" ")[1] || "");
+    let metodo = `<span class="metodo">${esc(METODOS[v.metodo_pago] || v.metodo_pago || "Efectivo")}</span>`;
+    if (esAnulacion) metodo = '<span class="metodo" style="background:#FBE3E7;color:var(--rojo-txt)">Devolución</span>';
+    else if (yaAnulada) metodo = '<span class="metodo">ANULADA</span>';
+    const estilo = esAnulacion ? 'style="color:var(--rojo-txt)"' : (yaAnulada ? 'style="color:#8A8A8A"' : "");
+    const tachado = yaAnulada ? ' style="text-decoration:line-through"' : "";
     html+=`<tr ${estilo}>
-      <td>${esc(hora)}</td><td>${esc(items)}</td><td>${parseFloat(v.total).toFixed(2)} €</td><td>${esc(met)}</td>
-      <td style="text-align:center; white-space:nowrap;">
-        <button class="btn-cargar-pedido" onclick="verTicketAntiguo(${index})" style="padding: 8px 14px; min-width: auto; font-size: 14px;">👁️ Ver</button>
-        ${!esAnulacion && !yaAnulada ? `<button class="btn-cargar-pedido" onclick="anularVenta(${index})" style="padding: 8px 14px; min-width: auto; font-size: 14px; background:#ef4444; margin-left:6px;">↩️ Anular</button>` : ""}
+      <td${tachado}>${esc(hora)}</td><td${tachado}>${esc(items)}</td>
+      <td style="text-align:right;font-weight:700${yaAnulada ? ";text-decoration:line-through" : ""}">${eur(parseFloat(v.total))}</td><td>${metodo}</td>
+      <td style="text-align:right; white-space:nowrap;">
+        <button class="btn-fila" onclick="verTicketAntiguo(${index})">Ver</button>
+        ${!esAnulacion && !yaAnulada ? `<button class="btn-fila btn-fila-rojo" onclick="anularVenta(${index})" style="margin-left:6px">Anular</button>` : ""}
       </td>
     </tr>`;
   });
@@ -1437,7 +1539,7 @@ async function openVentas(){
 function verTicketAntiguo(index) {
   const v = ventasCache[index];
   if (!v) return;
-  showReceipt(v.items, v.total, v.pagado_efectivo, v.pagado_tarjeta, v.cambio, v.metodo_pago, v.timestamp, null, v.anula_a);
+  showReceipt(v.items, v.total, v.pagado_efectivo, v.pagado_tarjeta, v.cambio, v.metodo_pago, v.timestamp, null, (v.anula_a || "").split("#")[0]);
 }
 function closeVentas(){ document.getElementById("ventas-overlay").classList.remove("open"); }
 
@@ -1446,16 +1548,23 @@ async function anularVenta(index) {
   if (!v) return;
   const hora = (v.timestamp||"").split(" ")[1] || v.timestamp;
   const devEf = (parseFloat(v.pagado_efectivo)||0) - (parseFloat(v.cambio)||0);
-  let msg = `¿Anular la venta de las ${hora} por ${parseFloat(v.total).toFixed(2)} €?`;
-  if (devEf > 0) msg += `\n\nSe abrirá el cajón para devolver ${devEf.toFixed(2)} € en efectivo.`;
-  if ((parseFloat(v.pagado_tarjeta)||0) > 0) msg += `\n\nRecuerda devolver ${parseFloat(v.pagado_tarjeta).toFixed(2)} € en el datáfono.`;
-  if (!confirm(msg)) return;
+  const detalle = [];
+  if (devEf > 0) detalle.push(`Se abrirá el cajón para devolver ${eur(devEf)} en efectivo.`);
+  if ((parseFloat(v.pagado_tarjeta)||0) > 0) detalle.push(`Recuerda devolver ${eur(parseFloat(v.pagado_tarjeta))} en el datáfono.`);
+  detalle.push("Se imprimirá un ticket de anulación.");
+  const ok = await confirmar({
+    titulo: "¿Anular esta venta?",
+    mensaje: `Venta de las ${hora} por ${eur(parseFloat(v.total))}.`,
+    detalle: detalle.join("\n"),
+    si: "Sí, anular"
+  });
+  if (!ok) return;
 
   let res = null, rd = {};
   try {
     res = await fetch("/api/venta/anular", {
       method: "POST", headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({timestamp: v.timestamp})
+      body: JSON.stringify({timestamp: v.timestamp, ocurrencia: v.ocurrencia})
     });
     rd = await res.json().catch(() => ({}));
   } catch(e) { res = null; }
@@ -1470,7 +1579,7 @@ async function anularVenta(index) {
 /* === GESTIÓN DE PEDIDOS EN ESPERA === */
 async function openPedidosModal() {
   document.getElementById("pedidos-overlay").classList.add("open");
-  document.getElementById("input-buscar-pedido").value = ""; 
+  document.getElementById("input-buscar-pedido").value = "";
   document.getElementById("pedidos-list").innerHTML = "Cargando...";
   const r = await fetch("/api/pedidos");
   pedidosPendientesCache = await r.json();
@@ -1484,8 +1593,10 @@ function limpiarBusquedaPedidos() {
 
 function renderTablaPedidos() {
   const filtro = document.getElementById("input-buscar-pedido").value.toLowerCase().trim();
-  let html = '<table><tr><th>ID</th><th>Cliente</th><th>Teléfono</th><th>Hora Recogida</th><th>Total</th><th>Acciones</th></tr>';
-  
+  const n = pedidosPendientesCache.length;
+  document.getElementById("pedidos-contador").textContent = n === 1 ? "1 pendiente" : n + " pendientes";
+  let html = '<table class="tabla"><tr><th>Nº</th><th>Cliente</th><th>Teléfono</th><th>Recoger</th><th style="text-align:right">Total</th><th></th></tr>';
+
   const pedidosFiltrados = pedidosPendientesCache.filter(p => {
     const nom = (p.nombre_cliente || "").toLowerCase();
     const tel = (p.telefono || "").toLowerCase();
@@ -1493,23 +1604,23 @@ function renderTablaPedidos() {
   });
 
   if (pedidosFiltrados.length === 0) {
-    html += `<tr><td colspan="6" style="text-align:center; color:#64748b; padding: 20px;">
+    html += `<tr><td colspan="6" style="text-align:center; color:#6B6B6B; padding: 20px;">
                ${filtro ? "No hay coincidencias con la búsqueda" : "No hay pedidos pendientes"}
              </td></tr>`;
   } else {
     pedidosFiltrados.forEach(p => {
       const nombre = esc(p.nombre_cliente || "Sin nombre");
       const telefono = p.telefono ? esc(p.telefono) : "—";
-      const hora = p.hora_recogida ? esc(p.hora_recogida) : "—";
+      const hora = p.hora_recogida ? `<span class="hora-pill">${esc(p.hora_recogida)}</span>` : "—";
       html += `<tr>
-        <td>#${p.id}</td>
-        <td>${nombre}</td>
+        <td style="font-weight:700">#${p.id}</td>
+        <td style="font-weight:600">${nombre}</td>
         <td>${telefono}</td>
         <td>${hora}</td>
-        <td>${p.total.toFixed(2)} €</td>
-        <td>
-          <button class="btn-cargar-pedido" onclick="cargarPedido(${p.id})">Cargar</button>
-          <button class="al-del" onclick="eliminarPedido(${p.id})" style="margin-left:8px;">🗑</button>
+        <td style="text-align:right;font-family:var(--display);font-size:20px;font-weight:700">${eur(p.total)}</td>
+        <td style="text-align:right;white-space:nowrap">
+          <button class="btn-fila btn-fila-rojo" onclick="cargarPedido(${p.id})">Cargar</button>
+          <button class="btn-papelera" onclick="eliminarPedido(${p.id})" aria-label="Eliminar pedido ${p.id}"><svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
         </td>
       </tr>`;
     });
@@ -1537,7 +1648,14 @@ async function cargarPedido(id) {
 }
 
 async function eliminarPedido(id) {
-  if(!confirm("¿Eliminar este pedido pendiente?")) return;
+  const p = pedidosPendientesCache.find(x => x.id === id);
+  const ok = await confirmar({
+    titulo: "¿Eliminar este pedido?",
+    mensaje: `Pedido #${id}` + (p && p.nombre_cliente ? ` de ${p.nombre_cliente}` : "") + (p ? ` por ${eur(p.total)}.` : "."),
+    detalle: "El pedido se borra y no se podrá cobrar.",
+    si: "Sí, eliminar"
+  });
+  if (!ok) return;
   await fetch("/api/pedido/" + id, {method: "DELETE"});
   toast("🗑️ Pedido eliminado");
   openPedidosModal();
@@ -1550,7 +1668,7 @@ let clientesCache = {};
 function abrirNumpadTelefono() {
   openNumpad('Teléfono del cliente', function(v) {
     document.getElementById('input-espera-tel').value = v;
-    
+
     // Magia: Si el teléfono existe en caché y la casilla de nombre está vacía...
     if (v && clientesCache[v]) {
       const inputNombre = document.getElementById('input-espera-nombre');
@@ -1564,19 +1682,21 @@ function abrirNumpadTelefono() {
 
 function abrirModalEspera() {
   if (currentPedidoId) {
-    document.getElementById("titulo-espera").textContent = "Actualizar Pedido #" + currentPedidoId;
+    document.getElementById("titulo-espera").textContent = "Actualizar pedido #" + currentPedidoId;
   } else {
-    document.getElementById("titulo-espera").textContent = "Guardar Nuevo Pedido";
+    document.getElementById("titulo-espera").textContent = "Guardar pedido";
     document.getElementById("input-espera-nombre").value = "";
     document.getElementById("input-espera-tel").value = "";
     document.getElementById("input-espera-hora").value = "";
   }
-  
+
   // Descarga la agenda de clientes en segundo plano para tenerla ultra rápida
   fetch("/api/clientes").then(r => r.json()).then(data => {
     if(!data.error) clientesCache = data;
   }).catch(e => console.error("Error agenda", e));
 
+  const articulos = order.reduce((s,x) => s + (parseInt(x.qty) || 0), 0);
+  document.getElementById("espera-resumen").textContent = `${articulos} ${articulos === 1 ? "artículo" : "artículos"} · ${eur(getTotal())} · se cobra al recoger`;
   document.getElementById("form-espera-overlay").classList.add("open");
 }
 
@@ -1634,25 +1754,26 @@ function renderVKB(){
   const rows=vkbShift?ROWS_UPPER:ROWS_LOWER;
   document.getElementById("vkb-keys").innerHTML=rows.map(row=>
     '<div class="vkb-row">'+row.map(k=>{
-      if(k==="SPACE") return '<button class="vk-space" onclick="vkType(\' \')">Espacio</button>';
-      if(k==="BACK") return '<button class="vk-back" onclick="vkBack()">⌫</button>';
+      if(k==="SPACE") return '<button class="vk-space" onclick="vkType(\' \')">espacio</button>';
+      if(k==="BACK") return '<button class="vk-back" onclick="vkBack()" aria-label="Borrar"><svg class="icono" style="width:24px;height:24px;margin:0 auto" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><path d="m18 9-6 6"/><path d="m12 9 6 6"/></svg></button>';
       if(k==="ENTER") return '<button class="vk-enter" onclick="vkEnter()">Aceptar</button>';
       if(k==="CANCEL") return '<button class="vk-cancel" onclick="closeVKB()">Cancelar</button>';
-      if(k==="SHIFT") return '<button class="vk-shift" onclick="vkShift()">⇧</button>';
+      if(k==="SHIFT") return `<button class="vk-shift${vkbShift ? " on" : ""}" onclick="vkShift()" aria-label="Mayúsculas"><svg class="icono" style="width:22px;height:22px;margin:0 auto" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 4 13h5v7h6v-7h5z"/></svg></button>`;
+      if(/^[0-9]$/.test(k)) return `<button class="vk-num" onclick="vkType('${k}')">${k}</button>`;
       return `<button onclick="vkType('${k}')">${k}</button>`;
     }).join("")+'</div>'
   ).join("");
 }
-function vkType(c){ 
-    if(!vkbTarget)return; 
-    vkbTarget.value+=c; 
-    document.getElementById("vkb-display").textContent=vkbTarget.value; 
+function vkType(c){
+    if(!vkbTarget)return;
+    vkbTarget.value+=c;
+    document.getElementById("vkb-display").textContent=vkbTarget.value;
     vkbTarget.dispatchEvent(new Event('input'));
 }
-function vkBack(){ 
-    if(!vkbTarget)return; 
-    vkbTarget.value=vkbTarget.value.slice(0,-1); 
-    document.getElementById("vkb-display").textContent=vkbTarget.value; 
+function vkBack(){
+    if(!vkbTarget)return;
+    vkbTarget.value=vkbTarget.value.slice(0,-1);
+    document.getElementById("vkb-display").textContent=vkbTarget.value;
     vkbTarget.dispatchEvent(new Event('input'));
 }
 function vkShift(){ vkbShift=!vkbShift; renderVKB(); }
@@ -1660,31 +1781,36 @@ function vkEnter(){ closeVKB(); }
 
 /* === HARDWARE KEYBOARD LISTENER === */
 window.addEventListener('keydown', function(e) {
+  if (document.getElementById("confirm-overlay").classList.contains("open")) {
+    if (e.key === 'Escape') { responderConfirmacion(false); e.preventDefault(); }
+    else if (e.key === 'Enter') { responderConfirmacion(true); e.preventDefault(); }
+    return;
+  }
   if (document.getElementById("vkb-overlay").classList.contains("open")) {
-    if (e.key === 'Escape') { closeVKB(); e.preventDefault(); } 
-    else if (e.key === 'Enter') { vkEnter(); e.preventDefault(); } 
-    else if (e.key === 'Backspace') { vkBack(); e.preventDefault(); } 
+    if (e.key === 'Escape') { closeVKB(); e.preventDefault(); }
+    else if (e.key === 'Enter') { vkEnter(); e.preventDefault(); }
+    else if (e.key === 'Backspace') { vkBack(); e.preventDefault(); }
     else if (e.key.length === 1) { vkType(e.key); e.preventDefault(); }
     return;
   }
   if (document.getElementById("numpad-overlay").classList.contains("open")) {
-    if (e.key === 'Escape') { document.getElementById("numpad-overlay").classList.remove("open"); e.preventDefault(); } 
-    else if (e.key === 'Enter') { npConfirm(); e.preventDefault(); } 
-    else if (e.key === 'Backspace') { npBack(); e.preventDefault(); } 
-    else if (e.key >= '0' && e.key <= '9') { npPress(e.key); e.preventDefault(); } 
+    if (e.key === 'Escape') { document.getElementById("numpad-overlay").classList.remove("open"); e.preventDefault(); }
+    else if (e.key === 'Enter') { npConfirm(); e.preventDefault(); }
+    else if (e.key === 'Backspace') { npBack(); e.preventDefault(); }
+    else if (e.key >= '0' && e.key <= '9') { npPress(e.key); e.preventDefault(); }
     else if (e.key === '.' || e.key === ',') { npPress('.'); e.preventDefault(); }
     return;
   }
   if (document.getElementById("pay-overlay").classList.contains("open")) {
     let t = payMode === 'efectivo' ? 'ef' : (payMode === 'mixto' ? 'mx' : null);
     if (t) {
-      if (e.key === 'Escape') { closePay(); e.preventDefault(); } 
-      else if (e.key === 'Enter') { if (!document.getElementById("btn-pay-confirm").disabled) confirmPay(); e.preventDefault(); } 
-      else if (e.key === 'Backspace') { payNpBack(t); e.preventDefault(); } 
-      else if (e.key >= '0' && e.key <= '9') { payNp(e.key, t); e.preventDefault(); } 
+      if (e.key === 'Escape') { closePay(); e.preventDefault(); }
+      else if (e.key === 'Enter') { if (!document.getElementById("btn-pay-confirm").disabled) confirmPay(); e.preventDefault(); }
+      else if (e.key === 'Backspace') { payNpBack(t); e.preventDefault(); }
+      else if (e.key >= '0' && e.key <= '9') { payNp(e.key, t); e.preventDefault(); }
       else if (e.key === '.' || e.key === ',') { payNp('.', t); e.preventDefault(); }
     } else if (payMode === 'tarjeta') {
-      if (e.key === 'Escape') { closePay(); e.preventDefault(); } 
+      if (e.key === 'Escape') { closePay(); e.preventDefault(); }
       else if (e.key === 'Enter') { confirmPay(); e.preventDefault(); }
     }
     return;
@@ -1693,12 +1819,45 @@ window.addEventListener('keydown', function(e) {
 
 /* === TOAST === */
 let toastTimer = null;
+const ICONOS_AVISO = {
+  ok: '<path d="M20 6 9 17l-5-5"/>',
+  aviso: '<path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/>',
+  error: '<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>'
+};
 function toast(msg, ms = 2200){
   const t=document.getElementById("toast");
-  t.textContent=msg;
+  let tipo = "info";
+  if (/❌/.test(msg)) tipo = "error";
+  else if (/⚠️/.test(msg)) tipo = "aviso";
+  else if (/^(✅|💰|🔒|↩️|🖨️|📦|🗑️|💲|👤)/u.test(msg)) tipo = "ok";
+  // El tipo se ve en el icono; los emojis del texto sobran
+  const texto = msg.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\uFE0F\u21A9]/gu, "").replace(/\s+/g, " ").trim();
+  t.className = tipo;
+  t.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONOS_AVISO[tipo]}</svg><span></span>`;
+  t.querySelector("span").textContent = texto;
   t.classList.add("show");
   clearTimeout(toastTimer);
   toastTimer = setTimeout(()=>t.classList.remove("show"), ms);
+}
+
+/* === CONFIRMACIÓN === */
+let confirmResolver = null;
+function confirmar({titulo, mensaje = "", detalle = "", si = "Sí", no = "No, volver"}) {
+  document.getElementById("confirm-titulo").textContent = titulo;
+  document.getElementById("confirm-mensaje").textContent = mensaje;
+  document.getElementById("confirm-detalle").textContent = detalle;
+  document.getElementById("confirm-si").textContent = si;
+  document.getElementById("confirm-no").textContent = no;
+  document.getElementById("confirm-overlay").classList.add("open");
+  if (confirmResolver) confirmResolver(false);
+  return new Promise(resolve => { confirmResolver = resolve; });
+}
+function responderConfirmacion(respuesta) {
+  document.getElementById("confirm-overlay").classList.remove("open");
+  const r = confirmResolver;
+  confirmResolver = null;
+  if (r) r(respuesta);
 }
 
 /* === ENTRADAS Y SALIDAS DE CAJA === */
@@ -1730,18 +1889,17 @@ async function cargarMovimientos() {
 
   const suma = t => movs.filter(m => m.tipo === t).reduce((s, m) => s + (parseFloat(m.importe)||0), 0);
   document.getElementById("mov-resumen").innerHTML =
-    `<div class="vs-box"><div class="vs-val" style="color:#16a34a;">${suma("entrada").toFixed(2)} €</div><div class="vs-lbl">Entradas hoy</div></div>
-     <div class="vs-box"><div class="vs-val" style="color:#ef4444;">${suma("salida").toFixed(2)} €</div><div class="vs-lbl">Salidas hoy</div></div>`;
+    `<div class="vs-box"><div class="vs-val" style="color:var(--verde)">${eur(suma("entrada"))}</div><div class="vs-lbl">Entradas</div></div>
+     <div class="vs-box"><div class="vs-val" style="color:var(--rojo-txt)">${eur(suma("salida"))}</div><div class="vs-lbl">Salidas</div></div>`;
 
-  let html = '<table><tr><th>Hora</th><th>Tipo</th><th>Concepto</th><th style="text-align:right;">Importe</th></tr>';
-  if (!movs.length) html += '<tr><td colspan="4" style="text-align:center; color:#64748b; padding:20px;">Sin movimientos hoy</td></tr>';
+  let html = '<table class="tabla"><tr><th>Hora</th><th>Concepto</th><th style="text-align:right;">Importe</th></tr>';
+  if (!movs.length) html += '<tr><td colspan="3" style="text-align:center; color:#6B6B6B; padding:20px;">Sin movimientos hoy</td></tr>';
   movs.forEach(m => {
     const esSalida = m.tipo === "salida";
     html += `<tr>
-      <td>${esc((m.timestamp||"").split(" ")[1]||"")}</td>
-      <td style="color:${esSalida ? "#ef4444" : "#16a34a"}; font-weight:bold;">${esSalida ? "➖ Salida" : "➕ Entrada"}</td>
+      <td>${esc(((m.timestamp||"").split(" ")[1]||"").slice(0,5))}</td>
       <td>${esc(m.concepto||"")}</td>
-      <td style="text-align:right; font-weight:bold;">${esSalida ? "-" : "+"}${(parseFloat(m.importe)||0).toFixed(2)} €</td>
+      <td style="text-align:right; font-weight:700; color:${esSalida ? "var(--rojo-txt)" : "var(--verde)"}">${esSalida ? "−" : "+"}${eur(parseFloat(m.importe)||0)}</td>
     </tr>`;
   });
   lista.innerHTML = html + "</table>";
@@ -1749,7 +1907,7 @@ async function cargarMovimientos() {
 
 async function guardarMovimiento() {
   if (guardandoMov) return;
-  const importe = parseFloat(document.getElementById("mov-importe").value) || 0;
+  const importe = leerImporte(document.getElementById("mov-importe").value);
   const concepto = document.getElementById("mov-concepto").value.trim();
   if (importe <= 0) { toast("⚠️ Introduce el importe"); return; }
   if (!concepto) { toast("⚠️ Escribe el concepto"); return; }
@@ -1789,7 +1947,7 @@ function openStats() {
   const catSelect = document.getElementById("stat-f-cat");
   catSelect.innerHTML = '<option value="Todas">Todas</option>' + getParentCats().map(c => `<option value="${c}">${c}</option>`).join("");
   updateStatProdFilter();
-  setStatRango(0, 'hoy'); 
+  setStatRango(0, 'hoy');
   document.getElementById("stats-overlay").classList.add("open");
 }
 
@@ -1806,14 +1964,14 @@ function updateStatProdFilter() {
 function setStatRango(dias, btnId) {
   document.querySelectorAll(".stat-btn").forEach(b => b.classList.remove("active"));
   if(btnId) document.getElementById("btn-st-" + btnId).classList.add("active");
-  
+
   const hoy = new Date();
   const hasta = localDateStr(hoy);
   let desde = new Date();
-  
+
   if (dias === 9999) desde = new Date('2000-01-01');
   else desde.setDate(hoy.getDate() - dias);
-  
+
   document.getElementById("stat-desde").value = localDateStr(desde);
   document.getElementById("stat-hasta").value = hasta;
   runStats();
@@ -1833,7 +1991,7 @@ async function runStats() {
   const showQty = document.getElementById("stat-show-qty").checked;
   const showRev = document.getElementById("stat-show-rev").checked;
 
-  document.getElementById("stats-list").innerHTML = '<div style="text-align:center; padding:20px; font-weight:bold;">⏳ Analizando base de datos...</div>';
+  document.getElementById("stats-list").innerHTML = '<div style="text-align:center; padding:20px; font-weight:700;">Calculando...</div>';
 
   const r = await fetch(`/api/estadisticas?desde=${desde}&hasta=${hasta}`);
   const ventas = await r.json();
@@ -1853,7 +2011,7 @@ async function runStats() {
 
       let pu = parseFloat(it.precioUnit);
       if(isNaN(pu)) pu = getSafeItemPrice(it);
-      
+
       const qty = parseInt(it.qty) || 1;
       const rev = pu * qty;
 
@@ -1877,51 +2035,47 @@ async function runStats() {
   });
 
   if(Object.keys(data).length === 0) {
-    document.getElementById("stats-list").innerHTML = '<div style="text-align:center; padding:20px; color:#64748b; font-weight:bold; font-size:18px;">No hay registros de ventas para estas fechas.</div>';
+    document.getElementById("stats-list").innerHTML = '<div style="text-align:center; padding:20px; color:#6B6B6B; font-weight:700; font-size:18px;">No hay ventas en estas fechas.</div>';
     return;
   }
 
-  // Nueva paleta de alto contraste
-  let html = '<table style="width:100%; border-collapse: collapse;"><tr>';
-  if(agrupar === 'cat') html += '<th style="padding:12px; background:#1e293b; color:#fff; text-align:left;">Categoría</th>';
-  else if(agrupar === 'prod') html += '<th style="padding:12px; background:#1e293b; color:#fff; text-align:left;">Plato</th>';
-  else html += '<th style="padding:12px; background:#1e293b; color:#fff; text-align:left;">Categoría / Plato</th>';
-  
-  if(showQty) html += '<th style="padding:12px; background:#1e293b; color:#fff; text-align:right;">Unidades Vendidas</th>';
-  if(showRev) html += '<th style="padding:12px; background:#1e293b; color:#fff; text-align:right;">Facturado (€)</th>';
+  let html = '<table class="tabla"><tr>';
+  if(agrupar === 'cat') html += '<th>Categoría</th>';
+  else if(agrupar === 'prod') html += '<th>Plato</th>';
+  else html += '<th>Categoría / plato</th>';
+  if(showQty) html += '<th style="text-align:right">Unidades</th>';
+  if(showRev) html += '<th style="text-align:right">Facturado</th>';
   html += '</tr>';
 
-  const keys = Object.keys(data).sort();
+  // Las categorías que más facturan, primero
+  const keys = Object.keys(data).sort((a,b) => data[b].rev - data[a].rev);
   keys.forEach(k => {
-    // FILA DE CATEGORÍA: Fondo gris sólido, texto muy oscuro y euros en verde oscuro legible
-    html += `<tr style="background:#e2e8f0; border-bottom: 2px solid #cbd5e1;">
-      <td style="padding:12px; font-weight:900; font-size:17px; color:#0f172a;">${esc(k)}</td>
-      ${showQty ? `<td style="padding:12px; text-align:right; font-weight:bold; color:#0f172a;">${data[k].qty}</td>` : ''}
-      ${showRev ? `<td style="padding:12px; text-align:right; font-weight:900; color:#15803d;">${data[k].rev.toFixed(2)} €</td>` : ''}
+    html += `<tr class="${agrupar === 'prod' ? '' : 'st-cat'}">
+      <td${agrupar === 'prod' ? ' style="font-weight:600"' : ''}>${esc(k)}</td>
+      ${showQty ? `<td style="text-align:right">${data[k].qty}</td>` : ''}
+      ${showRev ? `<td style="text-align:right;${agrupar === 'prod' ? '' : 'color:var(--rojo-txt)'}">${eur(data[k].rev)}</td>` : ''}
     </tr>`;
 
     if (agrupar === 'cat_prod') {
-      const subs = Object.keys(data[k].subs).sort((a,b) => data[k].subs[b].qty - data[k].subs[a].qty); 
+      const subs = Object.keys(data[k].subs).sort((a,b) => data[k].subs[b].qty - data[k].subs[a].qty);
       subs.forEach(subK => {
-         // FILA DE PLATO: Fondo blanco puro, sin flechas, sangría de 25px para jerarquía visual
-         html += `<tr style="border-bottom: 1px solid #e2e8f0; background:#fff;">
-          <td style="padding:10px 10px 10px 25px; font-size:16px; color:#334155; font-weight:600;">${esc(subK)}</td>
-          ${showQty ? `<td style="padding:10px; text-align:right; color:#334155; font-weight:600;">${data[k].subs[subK].qty}</td>` : ''}
-          ${showRev ? `<td style="padding:10px; text-align:right; color:#334155; font-weight:600;">${data[k].subs[subK].rev.toFixed(2)} €</td>` : ''}
+        html += `<tr class="st-sub">
+          <td>${esc(subK)}</td>
+          ${showQty ? `<td style="text-align:right">${data[k].subs[subK].qty}</td>` : ''}
+          ${showRev ? `<td style="text-align:right">${eur(data[k].subs[subK].rev)}</td>` : ''}
         </tr>`;
       });
     }
   });
 
-  // FILA DE TOTALES: Fondo casi negro para anclar visualmente la tabla
-  html += `<tr style="background:#0f172a; color:#fff;">
-      <td style="padding:16px 12px; font-weight:900; font-size:18px;">TOTALES FILTRADOS</td>
-      ${showQty ? `<td style="padding:16px 12px; text-align:right; font-weight:900; font-size:18px;">${totalGlobalQty}</td>` : ''}
-      ${showRev ? `<td style="padding:16px 12px; text-align:right; font-weight:900; font-size:18px; color:#4ade80;">${totalGlobalRev.toFixed(2)} €</td>` : ''}
+  html += `<tr class="st-total">
+      <td>Total</td>
+      ${showQty ? `<td style="text-align:right">${totalGlobalQty}</td>` : ''}
+      ${showRev ? `<td style="text-align:right;background:var(--rojo)">${eur(totalGlobalRev)}</td>` : ''}
     </tr></table>`;
 
   document.getElementById("stats-list").innerHTML = html;
-} 
+}
 
 /* === ARQUEO Y CIERRE DE CAJA === */
 let cierreStats = { ef:0, tj:0, total:0, entradas:0, salidas:0 };
@@ -1940,16 +2094,16 @@ async function openCierre() {
   cierreStats.entradas = movimientos.filter(m => m.tipo === "entrada").reduce((s,m) => s + (parseFloat(m.importe)||0), 0);
   cierreStats.salidas = movimientos.filter(m => m.tipo === "salida").reduce((s,m) => s + (parseFloat(m.importe)||0), 0);
 
-  document.getElementById("c-entradas").textContent = cierreStats.entradas.toFixed(2) + " €";
-  document.getElementById("c-salidas").textContent = cierreStats.salidas.toFixed(2) + " €";
-  document.getElementById("c-ventas-ef").textContent = cierreStats.ef.toFixed(2) + " €";
-  document.getElementById("c-ventas-tj").textContent = cierreStats.tj.toFixed(2) + " €";
-  document.getElementById("c-ventas-total").textContent = cierreStats.total.toFixed(2) + " €";
-  
+  document.getElementById("c-entradas").textContent = eur(cierreStats.entradas);
+  document.getElementById("c-salidas").textContent = eur(cierreStats.salidas);
+  document.getElementById("c-ventas-ef").textContent = eur(cierreStats.ef);
+  document.getElementById("c-ventas-tj").textContent = eur(cierreStats.tj);
+  document.getElementById("c-ventas-total").textContent = eur(cierreStats.total);
+
   // Limpiamos la calculadora a 0
   const inputs = ['50','20','10','5','2','1','050','020','010','005','002','001'];
   inputs.forEach(id => document.getElementById("c-"+id).value = "0");
-  
+
   document.getElementById("cierre-overlay").classList.add("open");
   calcCierre(); // Hacemos el primer cálculo inicial
   abrirCajon(false); // Para poder contar el dinero
@@ -1960,53 +2114,62 @@ function teoricoCierre(fondo) {
   return fondo + cierreStats.ef + cierreStats.entradas - cierreStats.salidas;
 }
 
+// Dinero contado: billetes y monedas por su valor
+function contadoCierre() {
+  const v = (id) => parseInt(document.getElementById("c-"+id).value) || 0;
+  const real =
+    v('50')*50 + v('20')*20 + v('10')*10 + v('5')*5 +
+    v('2')*2 + v('1')*1 +
+    v('050')*0.50 + v('020')*0.20 + v('010')*0.10 +
+    v('005')*0.05 + v('002')*0.02 + v('001')*0.01;
+  return Math.round(real * 100) / 100;
+}
+
 function closeCierre() { document.getElementById("cierre-overlay").classList.remove("open"); }
 
 function calcCierre() {
   const fondo = parseFloat(document.getElementById("c-fondo").value) || 0;
-  
+
   // Teórico: Lo que debe haber en la caja física
   const teorico = teoricoCierre(fondo);
-  document.getElementById("c-teorico").textContent = teorico.toFixed(2) + " €";
-  
-  const v = (id) => parseInt(document.getElementById("c-"+id).value) || 0;
-  
-  // Real: Multiplicar los billetes por su valor
-  const real = 
-    v('50')*50 + v('20')*20 + v('10')*10 + v('5')*5 + 
-    v('2')*2 + v('1')*1 + 
-    v('050')*0.50 + v('020')*0.20 + v('010')*0.10 + 
-    v('005')*0.05 + v('002')*0.02 + v('001')*0.01;
-    
-  document.getElementById("c-real").textContent = real.toFixed(2) + " €";
-  
+  document.getElementById("c-teorico").textContent = eur(teorico);
+
+  const real = contadoCierre();
+  document.getElementById("c-real").textContent = eur(real);
+
   // Cálculo final
   const descuadre = real - teorico;
   const descEl = document.getElementById("c-descuadre");
-  
+
   if (Math.abs(descuadre) < 0.01) {
-    descEl.textContent = "Descuadre: 0.00 € (PERFECTO)";
+    descEl.innerHTML = "<span>Descuadre</span><b>0,00 € · Cuadra</b>";
     descEl.className = "cierre-descuadre ok";
   } else {
     const signo = descuadre > 0 ? "+" : "";
-    descEl.textContent = `Descuadre: ${signo}${descuadre.toFixed(2)} €`;
+    descEl.innerHTML = `<span>Descuadre</span><b>${signo}${eur(descuadre)} · ${descuadre > 0 ? "Sobra" : "Falta"}</b>`;
     descEl.className = "cierre-descuadre bad";
   }
 }
 
 async function guardarCierre() {
-  if(!confirm("¿Guardar el cierre de caja en la base de datos?")) return;
-  
+  const ok = await confirmar({
+    titulo: "¿Guardar el cierre de caja?",
+    mensaje: `Contado ${eur(contadoCierre())} · debería haber ${eur(teoricoCierre(parseFloat(document.getElementById("c-fondo").value) || 0))}.`,
+    detalle: "Se guarda el cierre y se imprime el justificante.",
+    si: "Sí, guardar"
+  });
+  if (!ok) return;
+
   const v = (id) => parseInt(document.getElementById("c-"+id).value) || 0;
   const desglose = {
     '50e': v('50'), '20e': v('20'), '10e': v('10'), '5e': v('5'),
     '2e': v('2'), '1e': v('1'), '50c': v('050'), '20c': v('020'),
     '10c': v('010'), '5c': v('005'), '2c': v('002'), '1c': v('001')
   };
-  
+
   const fondo = parseFloat(document.getElementById("c-fondo").value) || 0;
   const teorico = teoricoCierre(fondo);
-  const real = parseFloat(document.getElementById("c-real").textContent);
+  const real = contadoCierre();
 
   const payload = {
     fondo_inicial: fondo.toFixed(2),
