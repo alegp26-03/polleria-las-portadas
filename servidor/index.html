@@ -21,7 +21,28 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;-webkit-tap-h
 #app{display:grid;grid-template-rows:56px 1fr;grid-template-columns:1fr 400px;height:100vh}
 #topbar{grid-column:1/3;background:#1e293b;color:#fff;display:flex;align-items:center;
   padding:0 20px;gap:16px;font-size:18px;z-index:10}
-#topbar .title{font-weight:700;font-size:20px;flex:1}
+#topbar .title{font-weight:700;font-size:20px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#topbar button{white-space:nowrap}
+.printer-status{font-size:15px;padding:8px 10px;border-radius:8px;cursor:pointer;background:rgba(255,255,255,.1);white-space:nowrap}
+.printer-status::after{content:"";display:inline-block;width:11px;height:11px;border-radius:50%;margin-left:6px;background:#94a3b8;vertical-align:middle}
+.printer-status.ok::after{background:#22c55e}
+.printer-status.aviso::after{background:#f59e0b}
+.printer-status.error::after{background:#ef4444}
+/* Pantallas estrechas: botones más compactos y solo el icono del título */
+@media (max-width:1400px){
+  #topbar{gap:10px;padding:0 12px}
+  #topbar button{padding:8px 10px;font-size:14px}
+}
+@media (max-width:1300px){ #topbar .title-text{display:none} }
+#topbar .lbl-corto{display:none}
+@media (max-width:1150px){
+  #topbar .lbl-largo{display:none}
+  #topbar .lbl-corto{display:inline}
+  #topbar{gap:6px;padding:0 8px}
+  #topbar button{padding:8px 7px;font-size:13px}
+  #topbar .clock{font-size:17px;margin-right:0}
+  .printer-status{padding:8px 6px}
+}
 #topbar .clock{font-size:20px;font-variant-numeric:tabular-nums;margin-right:8px}
 #topbar button{background:rgba(255,255,255,.15);color:#fff;border-radius:8px;padding:8px 14px;
   font-size:15px;transition:.15s}
@@ -110,9 +131,9 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;-webkit-tap-h
 .numpad-grid .np-back{background:#fef9c3;color:#a16207}
 
 /* == PAYMENT MODAL == */
-.pay-modal .modal{width:460px;padding:24px}
+.pay-modal .modal{width:460px;padding:18px 24px}
 .pay-total-label{font-size:16px;color:#64748b;text-align:center}
-.pay-total{font-size:38px;font-weight:800;text-align:center;color:#1e293b;margin:4px 0 14px}
+.pay-total{font-size:36px;font-weight:800;text-align:center;color:#1e293b;margin:2px 0 10px}
 .pay-tabs{display:flex;gap:6px;margin-bottom:16px}
 .pay-tab{flex:1;padding:12px 6px;border-radius:10px;font-size:14px;font-weight:700;
   background:#e2e8f0;color:#475569;text-align:center;min-height:48px;transition:.15s}
@@ -132,8 +153,13 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;-webkit-tap-h
 .pay-change.positive{background:#dcfce7;color:#16a34a}
 .pay-change.negative{background:#fef2f2;color:#ef4444}
 .pay-change.zero{background:#f1f5f9;color:#64748b}
+.pay-quick{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:8px}
+.pay-quick button{height:44px;border-radius:10px;font-size:17px;font-weight:700;background:#dcfce7;color:#166534;transition:.12s}
+.pay-quick button:active{background:#86efac}
+.pay-tab.tab-entrada.active{background:#16a34a}
+.pay-tab.tab-salida.active{background:#ef4444}
 .pay-numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
-.pay-numpad button{height:56px;border-radius:10px;font-size:22px;font-weight:700;
+.pay-numpad button{height:50px;border-radius:10px;font-size:22px;font-weight:700;
   background:#f1f5f9;color:#1e293b;transition:.12s}
 .pay-numpad button:active{background:#cbd5e1}
 .pay-numpad .np-clear{background:#fef2f2;color:#ef4444}
@@ -313,12 +339,15 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;-webkit-tap-h
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="title">🐔 Pollería Las Portadas</div>
+    <div class="title">🐔 <span class="title-text">Pollería Las Portadas</span></div>
     <div class="clock" id="clock">00:00:00</div>
+    <span class="printer-status" id="printer-status" onclick="mostrarEstadoImpresora()" title="Comprobando impresora...">🖨️</span>
+    <button onclick="abrirCajon(true)">💰 <span class="lbl-largo">Abrir </span>Cajón</button>
+    <button onclick="openMovimientos()">💸 <span class="lbl-largo">Entradas/Salidas</span><span class="lbl-corto">Entr./Sal.</span></button>
     <button onclick="openPedidosModal()">📞 Pedidos</button>
     <button onclick="openVentas()">📊 Ventas</button>
-    <button onclick="openStats()">📈 Estadísticas</button>
-    <button onclick="openCierre()">🔒 Cierre de Caja</button>
+    <button onclick="openStats()">📈 <span class="lbl-largo">Estadísticas</span><span class="lbl-corto">Estad.</span></button>
+    <button onclick="openCierre()">🔒 Cierre<span class="lbl-largo"> de Caja</span></button>
     <button onclick="openAdmin()">⚙️ Gestión</button>
   </div>
   <div id="left">
@@ -376,6 +405,13 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;-webkit-tap-h
     <div class="pay-section active" id="pay-sec-efectivo">
       <div class="pay-field-label">💵 Efectivo entregado</div>
       <div class="pay-cash-display" id="pay-cash-ef">0</div>
+      <div class="pay-quick">
+        <button onclick="payQuick('exacto')">Exacto</button>
+        <button onclick="payQuick(5)">5 €</button>
+        <button onclick="payQuick(10)">10 €</button>
+        <button onclick="payQuick(20)">20 €</button>
+        <button onclick="payQuick(50)">50 €</button>
+      </div>
       <div class="pay-numpad" id="pay-np-ef">
         <button onclick="payNp('7','ef')">7</button><button onclick="payNp('8','ef')">8</button><button onclick="payNp('9','ef')">9</button>
         <button onclick="payNp('4','ef')">4</button><button onclick="payNp('5','ef')">5</button><button onclick="payNp('6','ef')">6</button>
@@ -493,7 +529,7 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;-webkit-tap-h
     <div id="receipt-content"></div>
     <div class="receipt-actions">
       <button class="btn-receipt-close" onclick="closeReceipt()">Cerrar</button>
-      <button class="btn-receipt-print" onclick="window.print()">🖨️ Imprimir</button>
+      <button class="btn-receipt-print" onclick="imprimirTicket()">🖨️ Imprimir</button>
     </div>
   </div>
 </div>
@@ -618,6 +654,8 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;-webkit-tap-h
           <div class="input-wrapper"><input type="number" id="c-fondo" value="50" step="0.01" onclick="this.select()" oninput="calcCierre()" style="width:140px;"> <span style="margin-left:5px;">€</span></div>
         </div>
         <div class="cierre-row" style="color:#16a34a;">+ Ventas en Efectivo: <span id="c-ventas-ef">0.00 €</span></div>
+        <div class="cierre-row" style="color:#16a34a;">+ Entradas de Caja: <span id="c-entradas">0.00 €</span></div>
+        <div class="cierre-row" style="color:#ef4444;">− Salidas de Caja: <span id="c-salidas">0.00 €</span></div>
         
         <div class="cierre-totales">
           <div class="c-total">Teórico en Caja: <span id="c-teorico">0.00 €</span></div>
@@ -637,6 +675,30 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;-webkit-tap-h
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="modal-overlay form-espera-modal" id="mov-overlay">
+  <div class="modal" style="width:560px;">
+    <div class="admin-title">💸 Entradas y Salidas de Caja</div>
+    <div class="pay-tabs">
+      <button class="pay-tab tab-entrada active" onclick="setMovTipo('entrada')">➕ Entrada de dinero</button>
+      <button class="pay-tab tab-salida" onclick="setMovTipo('salida')">➖ Salida de dinero</button>
+    </div>
+    <div class="form-espera-field">
+      <label>Importe (€)</label>
+      <input id="mov-importe" readonly placeholder="Toca para introducir el importe" onclick="openNumpad('Importe del movimiento',function(v){document.getElementById('mov-importe').value=v})">
+    </div>
+    <div class="form-espera-field">
+      <label>Concepto</label>
+      <input id="mov-concepto" readonly placeholder="Ej: Pago proveedor, cambio..." onclick="openVKB('mov-concepto')">
+    </div>
+    <div class="edit-actions">
+      <button class="btn-edit-cancel" onclick="closeMovimientos()">Cerrar</button>
+      <button class="btn-edit-save" id="btn-mov-guardar" onclick="guardarMovimiento()">✔ Registrar y abrir cajón</button>
+    </div>
+    <div class="ventas-summary" id="mov-resumen" style="margin-top:20px;"></div>
+    <div class="pedidos-list" id="mov-list" style="max-height:260px; margin-top:0;"></div>
   </div>
 </div>
 
@@ -992,6 +1054,10 @@ function payNp(c,t){
   else{if(c==="."&&payVals[t].includes(".")) return; payVals[t]+=c;}
   document.getElementById("pay-cash-"+t).textContent=payVals[t]; updatePayState();
 }
+function payQuick(v){
+  payVals.ef = v==="exacto" ? getTotal().toFixed(2) : String(v);
+  document.getElementById("pay-cash-ef").textContent=payVals.ef; updatePayState();
+}
 function payNpBack(t){ payVals[t]=payVals[t].slice(0,-1)||"0"; document.getElementById("pay-cash-"+t).textContent=payVals[t]; updatePayState(); }
 function payNpClear(t){ payVals[t]="0"; document.getElementById("pay-cash-"+t).textContent="0"; updatePayState(); }
 function updatePayState(){
@@ -1012,10 +1078,12 @@ function updatePayState(){
     document.getElementById("pay-card-mx").textContent=cardPart.toFixed(2)+" €";
     canPay=(cashPart+cardPart)>=total-0.001;
   }
-  document.getElementById("btn-pay-confirm").disabled=!canPay;
+  document.getElementById("btn-pay-confirm").disabled=!canPay || cobrando;
 }
 
+let cobrando = false;
 async function confirmPay(){
+  if(cobrando) return;
   const total=getTotal();
   let pagado_efectivo=0, pagado_tarjeta=0, cambio=0, metodo=payMode;
   
@@ -1051,31 +1119,89 @@ async function confirmPay(){
     total: total.toFixed(2)
   };
 
-  if(currentPedidoId) {
-      const res = await fetch(`/api/pedido/${currentPedidoId}/cobrar`, {
+  // Evita cobrar dos veces si se pulsa Confirmar (o Enter) mientras se guarda
+  cobrando = true;
+  document.getElementById("btn-pay-confirm").disabled = true;
+  const esPedido = !!currentPedidoId;
+  const url = esPedido ? `/api/pedido/${currentPedidoId}/cobrar` : "/api/venta";
+  try {
+    let res = null, rd = {};
+    try {
+      res = await fetch(url, {
         method: "POST", headers: {"Content-Type": "application/json"},
         body: JSON.stringify(payload)
       });
-      const rd = await res.json();
-      closePay();
-      showReceipt(itemsMapeados, total, pagado_efectivo, pagado_tarjeta, cambio, metodo, rd.timestamp, rd.pedido);
-      clearOrder();
-      toast("✅ Pedido cobrado correctamente");
-  } else {
-      const res = await fetch("/api/venta",{
-        method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify(payload)
-      });
-      const rd = await res.json();
-      closePay();
-      showReceipt(itemsMapeados, total, pagado_efectivo, pagado_tarjeta, cambio, metodo, rd.timestamp);
-      clearOrder();
-      toast("✅ Venta registrada correctamente");
+      rd = await res.json().catch(() => ({}));
+    } catch(e) { res = null; }
+
+    // Si el servidor no confirma la venta, el pedido se queda en pantalla para reintentar
+    if(!res || !res.ok || !rd.ok){
+      toast("❌ " + (rd.error || "Sin conexión con el servidor") + ". La venta NO se ha guardado", 6000);
+      return;
+    }
+    closePay();
+    showReceipt(itemsMapeados, total, pagado_efectivo, pagado_tarjeta, cambio, metodo, rd.timestamp, rd.pedido);
+    clearOrder();
+    avisoImpresion(esPedido ? "✅ Pedido cobrado correctamente" : "✅ Venta registrada correctamente", rd.impresora);
+  } finally {
+    cobrando = false;
+    updatePayState();
   }
 }
 
+/* === IMPRESORA Y CAJÓN PORTAMONEDAS === */
+async function enviarImpresion(url, body){
+  try {
+    const opts = {method: "POST"};
+    if(body !== undefined){ opts.headers = {"Content-Type": "application/json"}; opts.body = JSON.stringify(body); }
+    const res = await fetch(url, opts);
+    const rd = await res.json().catch(() => ({}));
+    actualizarEstadoImpresora();
+    return rd;
+  } catch(e) {
+    return {ok: false, error: "Sin conexión con el servidor"};
+  }
+}
+
+// Muestra el resultado de una operación y, si la impresora o el cajón fallaron, el motivo
+function avisoImpresion(msg, imp){
+  if(imp && !imp.ok) toast(msg + " · ⚠️ " + (imp.error || "Error de impresora"), 6000);
+  else toast(msg);
+  actualizarEstadoImpresora();
+}
+
+async function abrirCajon(manual){
+  const r = await enviarImpresion("/api/abrir-cajon");
+  if(!r.ok) toast("⚠️ " + (r.error || "No se pudo abrir el cajón"), 5000);
+  else if(manual) toast("💰 Cajón abierto");
+}
+
+async function actualizarEstadoImpresora(){
+  const el = document.getElementById("printer-status");
+  try {
+    const e = await (await fetch("/api/impresora/estado")).json();
+    el.className = "printer-status " + ({ok: "ok", aviso: "aviso", error: "error"}[e.estado] || "");
+    el.dataset.mensaje = e.mensaje || "";
+  } catch(err) {
+    el.className = "printer-status error";
+    el.dataset.mensaje = "Sin conexión con el servidor";
+  }
+  el.title = el.dataset.mensaje;
+}
+
+function mostrarEstadoImpresora(){
+  const el = document.getElementById("printer-status");
+  toast("🖨️ " + (el.dataset.mensaje || "Comprobando impresora..."), 5000);
+  actualizarEstadoImpresora();
+}
+
 /* === TICKET === */
-function showReceipt(items, total, efect, tarj, cambio, metodo, ts, pedido) {
+// Datos del ticket abierto en pantalla, para poder imprimirlo/reimprimirlo
+let ticketActual = null;
+
+function showReceipt(items, total, efect, tarj, cambio, metodo, ts, pedido, anulaA) {
+    ticketActual = {items, total, pagado_efectivo: efect, pagado_tarjeta: tarj, cambio,
+                    metodo_pago: metodo, timestamp: ts, anula_a: anulaA || ""};
     const totalNum = parseFloat(total) || 0;
     const baseImponible = totalNum / 1.10;
     const cuotaIva = totalNum - baseImponible;
@@ -1088,6 +1214,10 @@ function showReceipt(items, total, efect, tarj, cambio, metodo, ts, pedido) {
     h += '<div class="rc-center">Tel: 623700918</div>';
     h += '<div class="rc-center">DNI: 48964063F</div>';
     h += '<div class="rc-line"></div>';
+    if (metodo === "anulacion") {
+        h += '<div class="rc-center rc-bold" style="font-size:15px">ANULACIÓN DE VENTA</div>';
+        h += `<div class="rc-center">Venta original: ${esc(anulaA || "")}</div>`;
+    }
     h += `<div class="rc-center">${esc(ts)}</div>`;
     h += '<div class="rc-line"></div>';
     
@@ -1118,7 +1248,12 @@ function showReceipt(items, total, efect, tarj, cambio, metodo, ts, pedido) {
     h += '</div>';
 
     h += '<div class="rc-line"></div>';
-    if (metodo === "efectivo") {
+    if (metodo === "anulacion") {
+        const devEf = -((parseFloat(efect) || 0) - (parseFloat(cambio) || 0));
+        const devTj = -(parseFloat(tarj) || 0);
+        if (Math.abs(devEf) >= 0.005) h += `<div class="rc-row rc-bold"><span>Devuelto en efectivo</span><span>${devEf.toFixed(2)} €</span></div>`;
+        if (Math.abs(devTj) >= 0.005) h += `<div class="rc-row rc-bold"><span>Devuelto a tarjeta</span><span>${devTj.toFixed(2)} €</span></div>`;
+    } else if (metodo === "efectivo") {
         h += `<div class="rc-row"><span>Efectivo</span><span>${parseFloat(efect).toFixed(2)} €</span></div>`;
         h += `<div class="rc-row"><span>Cambio</span><span>${parseFloat(cambio).toFixed(2)} €</span></div>`;
     } else if (metodo === "tarjeta") {
@@ -1137,8 +1272,41 @@ function showReceipt(items, total, efect, tarj, cambio, metodo, ts, pedido) {
 
 function closeReceipt(){ document.getElementById("receipt-overlay").classList.remove("open"); }
 
+async function imprimirTicket(){
+  if(!ticketActual){ window.print(); return; }
+  const r = await enviarImpresion("/api/imprimir/ticket", ticketActual);
+  // Sin impresora configurada se sigue imprimiendo desde el navegador
+  if(r.configurada === false){ window.print(); return; }
+  if(r.ok) toast("🖨️ Ticket enviado a la impresora");
+  else toast("⚠️ " + (r.error || "No se pudo imprimir"), 5000);
+}
+
 /* === IMPRIMIR COMANDA PARA COCINA === */
-function imprimirComanda() {
+function categoriaComanda(it) {
+  if (it.id >= 0) {
+    const prod = productos.find(x => x.id === it.id);
+    if (prod && prod.categoria) return prod.categoria.split('/')[0].trim().toUpperCase();
+  }
+  return "VARIOS";
+}
+
+async function imprimirComanda() {
+  const horaRecogida = document.getElementById("input-espera-hora").value.trim();
+  const r = await enviarImpresion("/api/imprimir/comanda", {
+    pedido_id: currentPedidoId,
+    hora_recogida: horaRecogida,
+    items: order.map(it => ({
+      qty: it.qty, nombre: it.nombre, categoria: categoriaComanda(it),
+      removals: it.removals || [], extras: it.extras || [], notes: it.notes || ""
+    }))
+  });
+  if (r.ok) { toast("🖨️ Comanda enviada a cocina"); return; }
+  if (r.configurada !== false) { toast("⚠️ " + (r.error || "No se pudo imprimir la comanda"), 5000); return; }
+  imprimirComandaNavegador();
+}
+
+// Comanda impresa desde el navegador (cuando no hay impresora configurada en el servidor)
+function imprimirComandaNavegador() {
   let h = '<div style="font-family: Arial; padding-bottom: 20px; color: #000;">';
   h += '<div class="rc-center rc-bold" style="font-size:20px; border-bottom:2px solid #000; margin-bottom:10px;">COMANDA COCINA</div>';
   
@@ -1155,11 +1323,7 @@ function imprimirComanda() {
   let ultimaCategoria = "";
 
   order.forEach(it => {
-    let catName = "VARIOS"; 
-    if (it.id >= 0) {
-      const prod = productos.find(x => x.id === it.id);
-      if (prod && prod.categoria) catName = prod.categoria.split('/')[0].trim().toUpperCase();
-    }
+    const catName = categoriaComanda(it);
 
     if (catName !== ultimaCategoria) {
       h += `<div class="rc-center rc-bold" style="font-size:15px; margin-top:16px; margin-bottom:8px; letter-spacing:2px;">---------- ${esc(catName)} ----------</div>`;
@@ -1178,6 +1342,7 @@ function imprimirComanda() {
   });
   
   h += '</div>';
+  ticketActual = null;
   document.getElementById("receipt-content").innerHTML = h;
   document.getElementById("receipt-overlay").classList.add("open");
   setTimeout(() => window.print(), 300);
@@ -1226,8 +1391,16 @@ async function adminAdd(){
 async function openVentas(){
   const r=await fetch("/api/ventas"); const ventas=await r.json();
   ventasCache = ventas;
-  const nv=ventas.length;
-  
+  // Igual que el servidor: si hay varias ventas en el mismo segundo, las anulaciones cuentan por orden
+  const porAnular = {};
+  ventas.forEach(v => { if (v.metodo_pago === "anulacion") porAnular[v.anula_a] = (porAnular[v.anula_a] || 0) + 1; });
+  const anulada = ventas.map(v => {
+    if (v.metodo_pago === "anulacion" || !porAnular[v.timestamp]) return false;
+    porAnular[v.timestamp]--;
+    return true;
+  });
+  const nv=ventas.filter((v, i) => v.metodo_pago !== "anulacion" && !anulada[i]).length;
+
   const totalDay=ventas.reduce((s,v)=>s+parseFloat(v.total),0);
   const totalEf=ventas.reduce((s,v)=>s+(parseFloat(v.pagado_efectivo||0) - parseFloat(v.cambio||0)),0);
   const totalTj=ventas.reduce((s,v)=>s+parseFloat(v.pagado_tarjeta||0),0);
@@ -1242,11 +1415,17 @@ async function openVentas(){
   ventas.forEach((v, index)=>{
     const hora=(v.timestamp||"").split(" ")[1]||v.timestamp;
     const items=(v.items||[]).map(x=>x.qty+"x "+x.nombre).join(", ");
-    const met=v.metodo_pago||"efectivo";
-    html+=`<tr>
+    const esAnulacion = v.metodo_pago === "anulacion";
+    const yaAnulada = anulada[index];
+    let met = v.metodo_pago||"efectivo";
+    if (esAnulacion) met = "↩️ anulación";
+    else if (yaAnulada) met += " (ANULADA)";
+    const estilo = esAnulacion ? 'style="color:#dc2626;"' : (yaAnulada ? 'style="color:#94a3b8; text-decoration:line-through;"' : "");
+    html+=`<tr ${estilo}>
       <td>${esc(hora)}</td><td>${esc(items)}</td><td>${parseFloat(v.total).toFixed(2)} €</td><td>${esc(met)}</td>
-      <td style="text-align:center;">
+      <td style="text-align:center; white-space:nowrap;">
         <button class="btn-cargar-pedido" onclick="verTicketAntiguo(${index})" style="padding: 8px 14px; min-width: auto; font-size: 14px;">👁️ Ver</button>
+        ${!esAnulacion && !yaAnulada ? `<button class="btn-cargar-pedido" onclick="anularVenta(${index})" style="padding: 8px 14px; min-width: auto; font-size: 14px; background:#ef4444; margin-left:6px;">↩️ Anular</button>` : ""}
       </td>
     </tr>`;
   });
@@ -1258,9 +1437,35 @@ async function openVentas(){
 function verTicketAntiguo(index) {
   const v = ventasCache[index];
   if (!v) return;
-  showReceipt(v.items, v.total, v.pagado_efectivo, v.pagado_tarjeta, v.cambio, v.metodo_pago, v.timestamp);
-} 
+  showReceipt(v.items, v.total, v.pagado_efectivo, v.pagado_tarjeta, v.cambio, v.metodo_pago, v.timestamp, null, v.anula_a);
+}
 function closeVentas(){ document.getElementById("ventas-overlay").classList.remove("open"); }
+
+async function anularVenta(index) {
+  const v = ventasCache[index];
+  if (!v) return;
+  const hora = (v.timestamp||"").split(" ")[1] || v.timestamp;
+  const devEf = (parseFloat(v.pagado_efectivo)||0) - (parseFloat(v.cambio)||0);
+  let msg = `¿Anular la venta de las ${hora} por ${parseFloat(v.total).toFixed(2)} €?`;
+  if (devEf > 0) msg += `\n\nSe abrirá el cajón para devolver ${devEf.toFixed(2)} € en efectivo.`;
+  if ((parseFloat(v.pagado_tarjeta)||0) > 0) msg += `\n\nRecuerda devolver ${parseFloat(v.pagado_tarjeta).toFixed(2)} € en el datáfono.`;
+  if (!confirm(msg)) return;
+
+  let res = null, rd = {};
+  try {
+    res = await fetch("/api/venta/anular", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({timestamp: v.timestamp})
+    });
+    rd = await res.json().catch(() => ({}));
+  } catch(e) { res = null; }
+  if (!res || !res.ok || !rd.ok) {
+    toast("❌ " + (rd.error || "Sin conexión con el servidor"), 5000);
+    return;
+  }
+  avisoImpresion("↩️ Venta anulada", rd.impresora);
+  openVentas();
+}
 
 /* === GESTIÓN DE PEDIDOS EN ESPERA === */
 async function openPedidosModal() {
@@ -1487,11 +1692,92 @@ window.addEventListener('keydown', function(e) {
 });
 
 /* === TOAST === */
-function toast(msg){
+let toastTimer = null;
+function toast(msg, ms = 2200){
   const t=document.getElementById("toast");
-  t.textContent=msg; 
-  t.classList.add("show"); 
-  setTimeout(()=>t.classList.remove("show"),2200); 
+  t.textContent=msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove("show"), ms);
+}
+
+/* === ENTRADAS Y SALIDAS DE CAJA === */
+let movTipo = "entrada";
+let guardandoMov = false;
+
+async function openMovimientos() {
+  setMovTipo("entrada");
+  document.getElementById("mov-importe").value = "";
+  document.getElementById("mov-concepto").value = "";
+  document.getElementById("mov-overlay").classList.add("open");
+  await cargarMovimientos();
+}
+
+function closeMovimientos() { document.getElementById("mov-overlay").classList.remove("open"); }
+
+function setMovTipo(t) {
+  movTipo = t;
+  document.querySelector("#mov-overlay .tab-entrada").classList.toggle("active", t === "entrada");
+  document.querySelector("#mov-overlay .tab-salida").classList.toggle("active", t === "salida");
+}
+
+async function cargarMovimientos() {
+  const lista = document.getElementById("mov-list");
+  let movs = [];
+  try { movs = await (await fetch("/api/movimientos")).json(); }
+  catch(e) { lista.innerHTML = "No se pudieron cargar los movimientos"; return; }
+  if (!Array.isArray(movs)) movs = [];
+
+  const suma = t => movs.filter(m => m.tipo === t).reduce((s, m) => s + (parseFloat(m.importe)||0), 0);
+  document.getElementById("mov-resumen").innerHTML =
+    `<div class="vs-box"><div class="vs-val" style="color:#16a34a;">${suma("entrada").toFixed(2)} €</div><div class="vs-lbl">Entradas hoy</div></div>
+     <div class="vs-box"><div class="vs-val" style="color:#ef4444;">${suma("salida").toFixed(2)} €</div><div class="vs-lbl">Salidas hoy</div></div>`;
+
+  let html = '<table><tr><th>Hora</th><th>Tipo</th><th>Concepto</th><th style="text-align:right;">Importe</th></tr>';
+  if (!movs.length) html += '<tr><td colspan="4" style="text-align:center; color:#64748b; padding:20px;">Sin movimientos hoy</td></tr>';
+  movs.forEach(m => {
+    const esSalida = m.tipo === "salida";
+    html += `<tr>
+      <td>${esc((m.timestamp||"").split(" ")[1]||"")}</td>
+      <td style="color:${esSalida ? "#ef4444" : "#16a34a"}; font-weight:bold;">${esSalida ? "➖ Salida" : "➕ Entrada"}</td>
+      <td>${esc(m.concepto||"")}</td>
+      <td style="text-align:right; font-weight:bold;">${esSalida ? "-" : "+"}${(parseFloat(m.importe)||0).toFixed(2)} €</td>
+    </tr>`;
+  });
+  lista.innerHTML = html + "</table>";
+}
+
+async function guardarMovimiento() {
+  if (guardandoMov) return;
+  const importe = parseFloat(document.getElementById("mov-importe").value) || 0;
+  const concepto = document.getElementById("mov-concepto").value.trim();
+  if (importe <= 0) { toast("⚠️ Introduce el importe"); return; }
+  if (!concepto) { toast("⚠️ Escribe el concepto"); return; }
+
+  guardandoMov = true;
+  const btn = document.getElementById("btn-mov-guardar");
+  btn.disabled = true;
+  try {
+    let res = null, rd = {};
+    try {
+      res = await fetch("/api/movimientos", {
+        method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({tipo: movTipo, importe: importe.toFixed(2), concepto})
+      });
+      rd = await res.json().catch(() => ({}));
+    } catch(e) { res = null; }
+    if (!res || !res.ok || !rd.ok) {
+      toast("❌ " + (rd.error || "Sin conexión con el servidor") + ". No se ha guardado", 5000);
+      return;
+    }
+    avisoImpresion(movTipo === "salida" ? "✅ Salida registrada" : "✅ Entrada registrada", rd.impresora);
+    document.getElementById("mov-importe").value = "";
+    document.getElementById("mov-concepto").value = "";
+    await cargarMovimientos();
+  } finally {
+    guardandoMov = false;
+    btn.disabled = false;
+  }
 }
 
 /* === ESTADISTICAS AVANZADAS === */
@@ -1638,17 +1924,24 @@ async function runStats() {
 } 
 
 /* === ARQUEO Y CIERRE DE CAJA === */
-let cierreStats = { ef:0, tj:0, total:0 };
+let cierreStats = { ef:0, tj:0, total:0, entradas:0, salidas:0 };
 
 async function openCierre() {
-  // Obtenemos las ventas del día en tiempo real
-  const r = await fetch("/api/ventas"); 
-  const ventas = await r.json();
-  
+  // Obtenemos las ventas y los movimientos de caja del día en tiempo real
+  const [ventas, movs] = await Promise.all([
+    fetch("/api/ventas").then(r => r.json()),
+    fetch("/api/movimientos").then(r => r.json()).catch(() => [])
+  ]);
+  const movimientos = Array.isArray(movs) ? movs : [];
+
   cierreStats.total = ventas.reduce((s,v) => s + parseFloat(v.total), 0);
   cierreStats.ef = ventas.reduce((s,v) => s + (parseFloat(v.pagado_efectivo||0) - parseFloat(v.cambio||0)), 0);
   cierreStats.tj = ventas.reduce((s,v) => s + parseFloat(v.pagado_tarjeta||0), 0);
-  
+  cierreStats.entradas = movimientos.filter(m => m.tipo === "entrada").reduce((s,m) => s + (parseFloat(m.importe)||0), 0);
+  cierreStats.salidas = movimientos.filter(m => m.tipo === "salida").reduce((s,m) => s + (parseFloat(m.importe)||0), 0);
+
+  document.getElementById("c-entradas").textContent = cierreStats.entradas.toFixed(2) + " €";
+  document.getElementById("c-salidas").textContent = cierreStats.salidas.toFixed(2) + " €";
   document.getElementById("c-ventas-ef").textContent = cierreStats.ef.toFixed(2) + " €";
   document.getElementById("c-ventas-tj").textContent = cierreStats.tj.toFixed(2) + " €";
   document.getElementById("c-ventas-total").textContent = cierreStats.total.toFixed(2) + " €";
@@ -1659,6 +1952,12 @@ async function openCierre() {
   
   document.getElementById("cierre-overlay").classList.add("open");
   calcCierre(); // Hacemos el primer cálculo inicial
+  abrirCajon(false); // Para poder contar el dinero
+}
+
+// Lo que debe haber físicamente en el cajón
+function teoricoCierre(fondo) {
+  return fondo + cierreStats.ef + cierreStats.entradas - cierreStats.salidas;
 }
 
 function closeCierre() { document.getElementById("cierre-overlay").classList.remove("open"); }
@@ -1667,7 +1966,7 @@ function calcCierre() {
   const fondo = parseFloat(document.getElementById("c-fondo").value) || 0;
   
   // Teórico: Lo que debe haber en la caja física
-  const teorico = fondo + cierreStats.ef;
+  const teorico = teoricoCierre(fondo);
   document.getElementById("c-teorico").textContent = teorico.toFixed(2) + " €";
   
   const v = (id) => parseInt(document.getElementById("c-"+id).value) || 0;
@@ -1706,29 +2005,36 @@ async function guardarCierre() {
   };
   
   const fondo = parseFloat(document.getElementById("c-fondo").value) || 0;
-  const teorico = fondo + cierreStats.ef;
+  const teorico = teoricoCierre(fondo);
   const real = parseFloat(document.getElementById("c-real").textContent);
-  
+
   const payload = {
     fondo_inicial: fondo.toFixed(2),
     ventas_efectivo: cierreStats.ef.toFixed(2),
     ventas_tarjeta: cierreStats.tj.toFixed(2),
+    entradas: cierreStats.entradas.toFixed(2),
+    salidas: cierreStats.salidas.toFixed(2),
     teorico_efectivo: teorico.toFixed(2),
     real_efectivo: real.toFixed(2),
     descuadre: (real - teorico).toFixed(2),
+    total_facturado: cierreStats.total.toFixed(2),
     desglose: desglose
   };
-  
-  const res = await fetch("/api/cierre", {
-    method: "POST", headers: {"Content-Type": "application/json"},
-    body: JSON.stringify(payload)
-  });
-  
-  if(res.ok) {
-    toast("🔒 Cierre de caja guardado con éxito");
+
+  let res = null, rd = {};
+  try {
+    res = await fetch("/api/cierre", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload)
+    });
+    rd = await res.json().catch(() => ({}));
+  } catch(e) { res = null; }
+
+  if(res && res.ok && rd.ok) {
+    avisoImpresion("🔒 Cierre de caja guardado con éxito", rd.impresora);
     closeCierre();
   } else {
-    toast("❌ Error guardando el cierre");
+    toast("❌ Error guardando el cierre", 5000);
   }
 }
 
@@ -1743,6 +2049,8 @@ function stepCierre(id, delta) {
 
 /* === INIT === */
 loadProducts();
+actualizarEstadoImpresora();
+setInterval(actualizarEstadoImpresora, 30000);
 </script>
 </body>
 </html>

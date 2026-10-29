@@ -16,6 +16,12 @@ Novedades v3:
   - Pedidos pendientes por telefono
   - Busqueda de pedidos por telefono
   - Cobro de pedidos pendientes
+
+Novedades v4:
+  - Impresion directa de ticket, comanda y cierre en la impresora termica (ESC/POS)
+  - Apertura automatica del cajon en cobros con efectivo y boton manual
+  - Entradas/salidas de caja y anulacion de ventas
+  - Configuracion de impresora en config_impresora.json
 """
 import csv
 import os
@@ -26,8 +32,15 @@ import tempfile
 import logging
 import traceback
 import sys
+import codecs
+import textwrap
 from datetime import datetime
 from flask import Flask, request, jsonify, Response
+
+try:
+    import win32print  # pip install pywin32 (necesario para abrir el cajon)
+except ImportError:
+    win32print = None
 
 if getattr(sys, 'frozen', False):
     # Si se está ejecutando como un .exe empaquetado
@@ -44,8 +57,10 @@ CSV_PROD = os.path.join(BASE_DIR, 'productos.csv')
 CSV_VENTAS = os.path.join(BASE_DIR, 'ventas.csv')
 CSV_PEDIDOS = os.path.join(BASE_DIR, 'pedidos_pendientes.csv')
 CSV_CIERRES = os.path.join(BASE_DIR, 'cierres.csv')
+CSV_MOVIMIENTOS = os.path.join(BASE_DIR, 'movimientos_caja.csv')
 BACKUP_DIR = os.path.join(BASE_DIR, 'backups')
 MAX_BACKUPS_ROTATIVOS = 3
+CONFIG_IMPRESORA = os.path.join(BASE_DIR, 'config_impresora.json')
 
 # =============================================================================
 #  SISTEMA DE LOGGING
@@ -116,6 +131,46 @@ def hacer_backup_rotativo(filepath):
         logger.info(f"Backup rotativo creado: {backup_1}")
     except Exception as e:
         logger.error(f"ERROR creando backup rotativo de {filepath}: {e}")
+
+
+def asegurar_columnas_csv(filepath, fieldnames):
+    """Si el CSV tiene una cabecera antigua, lo reescribe anadiendo las columnas nuevas vacias."""
+    try:
+        if not os.path.exists(filepath) or os.path.getsize(filepath) == 0:
+            return True
+        with open(filepath, newline='', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            actuales = list(reader.fieldnames or [])
+            faltan = [c for c in fieldnames if c not in actuales]
+            if not faltan:
+                return True
+            cabecera = actuales + faltan
+            filas = [{k: (row.get(k) or '') for k in cabecera} for row in reader]
+        hacer_backup_rotativo(filepath)
+        if escritura_atomica(filepath, filas, cabecera):
+            logger.info(f"Columnas {faltan} anadidas a {filepath}")
+            return True
+        return False
+    except Exception as e:
+        logger.error(f"ERROR actualizando columnas de {filepath}: {e}")
+        return False
+
+
+def anadir_fila_csv(filepath, fila, fieldnames):
+    """Anade una fila al CSV respetando el orden de su cabecera."""
+    es_nuevo = not os.path.exists(filepath) or os.path.getsize(filepath) == 0
+    if es_nuevo:
+        cabecera = fieldnames
+    else:
+        if not asegurar_columnas_csv(filepath, fieldnames):
+            raise IOError(f"No se pudo actualizar la cabecera de {filepath}")
+        with open(filepath, newline='', encoding='utf-8') as f:
+            cabecera = next(csv.reader(f))
+    with open(filepath, 'a', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=cabecera, extrasaction='ignore')
+        if es_nuevo:
+            writer.writeheader()
+        writer.writerow(fila)
 
 
 def hacer_backup_diario(filepath):
@@ -274,27 +329,27 @@ def siguiente_id(productos):
 #  VENTAS
 # =============================================================================
 
+# 'anula_a' guarda el timestamp de la venta original en las filas de anulacion
+VENTAS_FIELDNAMES = ['timestamp', 'items_json', 'total', 'pagado_efectivo', 'pagado_tarjeta',
+                     'cambio', 'metodo_pago', 'anula_a']
+
+
 def registrar_venta(data):
     """Registra una venta de forma segura."""
     try:
         es_nuevo = not os.path.exists(CSV_VENTAS) or os.path.getsize(CSV_VENTAS) == 0
         if not es_nuevo:
             hacer_backup_diario_ventas()
-        with open(CSV_VENTAS, 'a', newline='', encoding='utf-8') as f:
-            writer = csv.writer(f)
-            if es_nuevo:
-                writer.writerow(['timestamp', 'items_json', 'total',
-                                 'pagado_efectivo', 'pagado_tarjeta',
-                                 'cambio', 'metodo_pago'])
-            writer.writerow([
-                data.get('timestamp', ''),
-                json.dumps(data.get('items', []), ensure_ascii=False),
-                data.get('total', '0.00'),
-                data.get('pagado_efectivo', '0.00'),
-                data.get('pagado_tarjeta', '0.00'),
-                data.get('cambio', '0.00'),
-                data.get('metodo_pago', 'efectivo')
-            ])
+        anadir_fila_csv(CSV_VENTAS, {
+            'timestamp': data.get('timestamp', ''),
+            'items_json': json.dumps(data.get('items', []), ensure_ascii=False),
+            'total': data.get('total', '0.00'),
+            'pagado_efectivo': data.get('pagado_efectivo', '0.00'),
+            'pagado_tarjeta': data.get('pagado_tarjeta', '0.00'),
+            'cambio': data.get('cambio', '0.00'),
+            'metodo_pago': data.get('metodo_pago', 'efectivo'),
+            'anula_a': data.get('anula_a', '')
+        }, VENTAS_FIELDNAMES)
         logger.info(f"Venta registrada: {data.get('total', '?')} EUR ({data.get('metodo_pago', '?')})")
         return True
     except Exception as e:
@@ -343,30 +398,110 @@ def leer_ventas_hoy():
         logger.error(f"ERROR leyendo ventas: {e}")
     return ventas
 
+CIERRES_FIELDNAMES = ['timestamp', 'fondo_inicial', 'ventas_efectivo', 'ventas_tarjeta',
+                      'teorico_efectivo', 'real_efectivo', 'descuadre', 'desglose_json',
+                      'entradas', 'salidas']
+
+
 @app.route('/api/cierre', methods=['POST'])
 def api_guardar_cierre():
     try:
         data = request.json
-        es_nuevo = not os.path.exists(CSV_CIERRES) or os.path.getsize(CSV_CIERRES) == 0
-        with open(CSV_CIERRES, 'a', newline='', encoding='utf-8') as f:
-            writer = csv.writer(f)
-            if es_nuevo:
-                writer.writerow(['timestamp', 'fondo_inicial', 'ventas_efectivo', 'ventas_tarjeta', 'teorico_efectivo', 'real_efectivo', 'descuadre', 'desglose_json'])
-            
-            writer.writerow([
-                datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                data.get('fondo_inicial', '0'),
-                data.get('ventas_efectivo', '0'),
-                data.get('ventas_tarjeta', '0'),
-                data.get('teorico_efectivo', '0'),
-                data.get('real_efectivo', '0'),
-                data.get('descuadre', '0'),
-                json.dumps(data.get('desglose', {}))
-            ])
-        return jsonify({'ok': True}), 200
+        if not data:
+            return jsonify({'error': 'No se recibieron datos'}), 400
+        cierre = {
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'fondo_inicial': data.get('fondo_inicial', '0'),
+            'ventas_efectivo': data.get('ventas_efectivo', '0'),
+            'ventas_tarjeta': data.get('ventas_tarjeta', '0'),
+            'teorico_efectivo': data.get('teorico_efectivo', '0'),
+            'real_efectivo': data.get('real_efectivo', '0'),
+            'descuadre': data.get('descuadre', '0'),
+            'desglose_json': json.dumps(data.get('desglose', {})),
+            'entradas': data.get('entradas', '0.00'),
+            'salidas': data.get('salidas', '0.00')
+        }
+        anadir_fila_csv(CSV_CIERRES, cierre, CIERRES_FIELDNAMES)
+        logger.info(f"Cierre de caja guardado: descuadre {cierre['descuadre']} EUR")
+
+        impresion = imprimir_cierre(dict(cierre, desglose=data.get('desglose', {}),
+                                         total_facturado=data.get('total_facturado', '0')))
+        return jsonify({'ok': True, 'impresora': impresion}), 200
     except Exception as e:
         logger.error(f"ERROR en POST /api/cierre: {e}")
+        logger.error(traceback.format_exc())
         return jsonify({'error': 'Error guardando cierre'}), 500
+
+
+# =============================================================================
+#  MOVIMIENTOS DE CAJA (entradas y salidas de efectivo que no son ventas)
+# =============================================================================
+
+MOVIMIENTOS_FIELDNAMES = ['timestamp', 'tipo', 'importe', 'concepto']
+
+
+def leer_movimientos_hoy():
+    """Lee las entradas/salidas de caja del dia de hoy."""
+    movimientos = []
+    try:
+        if not os.path.exists(CSV_MOVIMIENTOS) or os.path.getsize(CSV_MOVIMIENTOS) == 0:
+            return movimientos
+        hoy = datetime.now().strftime('%Y-%m-%d')
+        with open(CSV_MOVIMIENTOS, newline='', encoding='utf-8') as f:
+            for row in csv.DictReader(f):
+                if (row.get('timestamp') or '').startswith(hoy):
+                    movimientos.append(row)
+    except Exception as e:
+        logger.error(f"ERROR leyendo movimientos de caja: {e}")
+    return movimientos
+
+
+@app.route('/api/movimientos', methods=['GET'])
+def api_get_movimientos():
+    try:
+        return jsonify(leer_movimientos_hoy())
+    except Exception as e:
+        logger.error(f"ERROR en GET /api/movimientos: {e}")
+        return jsonify({'error': 'Error interno del servidor'}), 500
+
+
+@app.route('/api/movimientos', methods=['POST'])
+def api_registrar_movimiento():
+    """Registra una entrada o salida de efectivo y abre el cajon."""
+    try:
+        data = request.json
+        if not data:
+            return jsonify({'error': 'No se recibieron datos'}), 400
+
+        tipo = str(data.get('tipo', '')).strip().lower()
+        if tipo not in ('entrada', 'salida'):
+            return jsonify({'error': 'El tipo debe ser entrada o salida'}), 400
+        try:
+            importe = round(float(data.get('importe', 0)), 2)
+        except (ValueError, TypeError):
+            return jsonify({'error': 'Importe no valido'}), 400
+        if not 0 < importe <= 99999:
+            return jsonify({'error': 'El importe debe ser mayor que 0'}), 400
+        concepto = str(data.get('concepto', '')).strip()[:200]
+        if not concepto:
+            return jsonify({'error': 'Indica el concepto del movimiento'}), 400
+
+        movimiento = {
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'tipo': tipo,
+            'importe': f"{importe:.2f}",
+            'concepto': concepto
+        }
+        anadir_fila_csv(CSV_MOVIMIENTOS, movimiento, MOVIMIENTOS_FIELDNAMES)
+        logger.info(f"Movimiento de caja: {tipo} {importe:.2f} EUR ({concepto})")
+
+        config = leer_config_impresora()
+        impresion = enviar_a_impresora(comando_cajon(config), 'Abrir cajon', config)
+        return jsonify({'ok': True, 'movimiento': movimiento, 'impresora': impresion}), 201
+    except Exception as e:
+        logger.error(f"ERROR en POST /api/movimientos: {e}")
+        logger.error(traceback.format_exc())
+        return jsonify({'error': 'Error interno del servidor'}), 500
 
 # =============================================================================
 #  PEDIDOS PENDIENTES (TELEFONO) - NUEVO en v3
@@ -586,13 +721,71 @@ def api_registrar_venta():
         data = request.json
         if not data:
             return jsonify({'error': 'No se recibieron datos'}), 400
+        if not isinstance(data.get('items'), list) or not data['items']:
+            return jsonify({'error': 'La venta no tiene productos'}), 400
+        try:
+            float(data.get('total'))
+        except (ValueError, TypeError):
+            return jsonify({'error': 'Total no valido'}), 400
         data['timestamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        data.pop('anula_a', None)
         if registrar_venta(data):
-            return jsonify({'ok': True, 'timestamp': data['timestamp']}), 201
+            impresion = imprimir_venta(data)
+            return jsonify({'ok': True, 'timestamp': data['timestamp'], 'impresora': impresion}), 201
         else:
             return jsonify({'error': 'Error al registrar venta'}), 500
     except Exception as e:
         logger.error(f"ERROR en POST /api/venta: {e}")
+        logger.error(traceback.format_exc())
+        return jsonify({'error': 'Error interno del servidor'}), 500
+
+
+def _negar_importe(valor):
+    """Cambia el signo de un importe guardado como texto (sin devolver '-0.00')."""
+    v = -_a_float(valor)
+    return f"{v:.2f}" if abs(v) >= 0.005 else "0.00"
+
+
+@app.route('/api/venta/anular', methods=['POST'])
+def api_anular_venta():
+    """Anula una venta de hoy registrando una venta en negativo que la compensa."""
+    try:
+        data = request.json
+        if not data:
+            return jsonify({'error': 'No se recibieron datos'}), 400
+        ts = str(data.get('timestamp', '')).strip()
+        if not ts:
+            return jsonify({'error': 'Falta indicar la venta a anular'}), 400
+
+        ventas = leer_ventas_hoy()
+        originales = [v for v in ventas
+                      if v.get('timestamp') == ts and v.get('metodo_pago') != 'anulacion']
+        if not originales:
+            return jsonify({'error': 'Venta no encontrada (solo se pueden anular ventas de hoy)'}), 404
+        # Si hubo varias ventas en el mismo segundo, se anulan por orden
+        ya_anuladas = sum(1 for v in ventas if v.get('anula_a') == ts)
+        if ya_anuladas >= len(originales):
+            return jsonify({'error': 'Esta venta ya esta anulada'}), 409
+        original = originales[ya_anuladas]
+
+        anulacion = {
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'items': [dict(it, qty=-_a_int(it.get('qty'), 1)) for it in original.get('items') or []],
+            'total': _negar_importe(original.get('total')),
+            'pagado_efectivo': _negar_importe(original.get('pagado_efectivo')),
+            'pagado_tarjeta': _negar_importe(original.get('pagado_tarjeta')),
+            'cambio': _negar_importe(original.get('cambio')),
+            'metodo_pago': 'anulacion',
+            'anula_a': ts
+        }
+        if not registrar_venta(anulacion):
+            return jsonify({'error': 'Error al registrar la anulacion'}), 500
+        logger.info(f"Venta {ts} anulada ({original.get('total')} EUR)")
+
+        impresion = imprimir_venta(anulacion)
+        return jsonify({'ok': True, 'anulacion': anulacion, 'impresora': impresion}), 201
+    except Exception as e:
+        logger.error(f"ERROR en POST /api/venta/anular: {e}")
         logger.error(traceback.format_exc())
         return jsonify({'error': 'Error interno del servidor'}), 500
 
@@ -783,10 +976,14 @@ def api_cobrar_pedido(pid):
 
         logger.info(f"Pedido #{pid} cobrado: {pedido['total']} EUR ({metodo})")
 
-        # 3. Devolver datos para el ticket
+        # 3. Cajon y ticket
+        impresion = imprimir_venta(venta_data)
+
+        # 4. Devolver datos para el ticket
         return jsonify({
             'ok': True,
             'timestamp': timestamp,
+            'impresora': impresion,
             'pedido': {
                 'id': pedido['id'],
                 'telefono': pedido.get('telefono', ''),
@@ -866,6 +1063,446 @@ def api_update_pedido(pid):
         logger.error(f"ERROR en PUT /api/pedido/{pid}: {e}")
         logger.error(traceback.format_exc())
         return jsonify({'error': 'Error interno del servidor'}), 500
+
+
+# =============================================================================
+#  IMPRESORA DE TICKETS Y CAJON PORTAMONEDAS (ESC/POS)
+# =============================================================================
+
+CONFIG_IMPRESORA_DEFECTO = {
+    'impresora': '',
+    'pin_cajon': 2,
+    'ancho_caracteres': 48,
+    'cortar_papel': True,
+    'imprimir_ticket_automatico': True,
+    'tabla_caracteres': 19,
+    'codificacion': 'cp858'
+}
+
+TICKET_NOMBRE = 'POLLERIA FREIDURIA LAS PORTADAS'
+TICKET_CABECERA = [
+    'Av. las Portadas, 2',
+    '41700 Dos Hermanas, Sevilla',
+    'Tel: 623700918',
+    'DNI: 48964063F'
+]
+IVA = 0.10
+PRECIO_EXTRA = 0.80
+
+DESGLOSE_CAJA = [
+    ('50e', '50 EUR', 50), ('20e', '20 EUR', 20), ('10e', '10 EUR', 10), ('5e', '5 EUR', 5),
+    ('2e', '2 EUR', 2), ('1e', '1 EUR', 1), ('50c', '0,50 EUR', 0.50), ('20c', '0,20 EUR', 0.20),
+    ('10c', '0,10 EUR', 0.10), ('5c', '0,05 EUR', 0.05), ('2c', '0,02 EUR', 0.02), ('1c', '0,01 EUR', 0.01)
+]
+
+# Bits de PRINTER_STATUS_* de Windows que indican que la impresora no puede imprimir
+ESTADOS_IMPRESORA_ERROR = [
+    (0x00000001, 'Impresora en pausa'),
+    (0x00000002, 'Impresora con error'),
+    (0x00000008, 'Atasco de papel'),
+    (0x00000010, 'Sin papel'),
+    (0x00000080, 'Impresora desconectada'),
+    (0x00001000, 'Impresora no disponible'),
+    (0x00400000, 'Tapa de la impresora abierta'),
+]
+PRINTER_ATTRIBUTE_WORK_OFFLINE = 0x00000400
+
+
+def _a_float(valor, defecto=0.0):
+    try:
+        return float(valor)
+    except (ValueError, TypeError):
+        return defecto
+
+
+def _a_int(valor, defecto=0):
+    try:
+        return int(float(valor))
+    except (ValueError, TypeError):
+        return defecto
+
+
+def formato_euros(valor):
+    v = _a_float(valor)
+    return f"{v:.2f} €" if abs(v) >= 0.005 else "0.00 €"
+
+
+def leer_config_impresora():
+    """Lee config_impresora.json y anade al archivo las opciones que le falten."""
+    config = dict(CONFIG_IMPRESORA_DEFECTO)
+    try:
+        guardado = {}
+        if os.path.exists(CONFIG_IMPRESORA):
+            # utf-8-sig: el Bloc de notas puede guardar el archivo con BOM
+            with open(CONFIG_IMPRESORA, 'r', encoding='utf-8-sig') as f:
+                guardado = json.load(f)
+            config.update(guardado)
+        if set(CONFIG_IMPRESORA_DEFECTO) - set(guardado):
+            with open(CONFIG_IMPRESORA, 'w', encoding='utf-8') as f:
+                json.dump(config, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        logger.error(f"ERROR leyendo {CONFIG_IMPRESORA}: {e}")
+    return config
+
+
+class DocumentoESCPOS:
+    """Construye un ticket en bytes ESC/POS para la impresora termica."""
+
+    ALINEACION = {'izq': 0, 'centro': 1, 'der': 2}
+    TAMANO = {'normal': 0x00, 'alto': 0x01, 'grande': 0x11}
+
+    def __init__(self, config):
+        self.ancho = max(_a_int(config.get('ancho_caracteres'), 48), 20)
+        self.cortar = bool(config.get('cortar_papel', True))
+        self.codificacion = str(config.get('codificacion') or 'cp858')
+        try:
+            codecs.lookup(self.codificacion)
+        except LookupError:
+            self.codificacion = 'cp858'
+        self.datos = bytearray(b'\x1b\x40')                                     # ESC @: reiniciar
+        self.datos += bytes([0x1B, 0x74, _a_int(config.get('tabla_caracteres'), 19) & 0xFF])  # ESC t: tabla
+
+    def _codificar(self, texto):
+        # Los caracteres que la impresora no tiene (emojis...) se omiten
+        return str(texto).encode(self.codificacion, errors='ignore')
+
+    def _formato(self, alinear, negrita, tamano):
+        self.datos += bytes([0x1B, 0x61, self.ALINEACION[alinear]])   # ESC a
+        self.datos += bytes([0x1B, 0x45, 1 if negrita else 0])        # ESC E
+        self.datos += bytes([0x1D, 0x21, self.TAMANO[tamano]])        # GS !
+
+    def _ancho(self, tamano):
+        return self.ancho // 2 if tamano == 'grande' else self.ancho
+
+    def texto(self, texto='', alinear='izq', negrita=False, tamano='normal', sangria=0):
+        self._formato(alinear, negrita, tamano)
+        ancho = self._ancho(tamano)
+        lineas = textwrap.wrap(str(texto), ancho - sangria) or ['']
+        for linea in lineas:
+            self.datos += self._codificar(' ' * sangria + linea) + b'\n'
+        self._formato('izq', False, 'normal')
+        return self
+
+    def fila(self, izquierda, derecha, negrita=False, tamano='normal'):
+        """Texto a la izquierda e importe pegado a la derecha."""
+        self._formato('izq', negrita, tamano)
+        ancho = self._ancho(tamano)
+        derecha = str(derecha)
+        hueco = max(ancho - len(derecha) - 1, 8)
+        lineas = textwrap.wrap(str(izquierda), hueco) or ['']
+        self.datos += self._codificar(lineas[0].ljust(ancho - len(derecha)) + derecha) + b'\n'
+        for linea in lineas[1:]:
+            self.datos += self._codificar(linea) + b'\n'
+        self._formato('izq', False, 'normal')
+        return self
+
+    def separador(self, caracter='-'):
+        self.datos += self._codificar(caracter * self.ancho) + b'\n'
+        return self
+
+    def salto(self, lineas=1):
+        self.datos += b'\n' * lineas
+        return self
+
+    def finalizar(self):
+        if self.cortar:
+            self.datos += b'\x1d\x56\x42\x00'   # GS V 66 0: avanzar hasta la cuchilla y corte parcial
+        else:
+            self.datos += b'\x1b\x64\x05'       # ESC d 5: avanzar papel para cortarlo a mano
+        return bytes(self.datos)
+
+
+def comando_cajon(config):
+    # ESC p m t1 t2 -> m=0 pin 2, m=1 pin 5; pulso de 50ms on / 500ms off
+    pin = 1 if str(config.get('pin_cajon', 2)).strip() == '5' else 0
+    return bytes([0x1B, 0x70, pin, 0x19, 0xFA])
+
+
+def _precio_unitario(item):
+    precio = _a_float(item.get('precioUnit'), None)
+    if precio is None:
+        precio = _a_float(item.get('precioBase')) + PRECIO_EXTRA * len(item.get('extras') or [])
+    return precio
+
+
+def generar_ticket_venta(venta, config):
+    """Ticket de cliente con el mismo contenido que el que se ve en pantalla."""
+    doc = DocumentoESCPOS(config)
+    total = _a_float(venta.get('total'))
+    efectivo = _a_float(venta.get('pagado_efectivo'))
+    tarjeta = _a_float(venta.get('pagado_tarjeta'))
+    cambio = _a_float(venta.get('cambio'))
+    metodo = venta.get('metodo_pago') or 'efectivo'
+
+    doc.texto(TICKET_NOMBRE, 'centro', negrita=True)
+    for linea in TICKET_CABECERA:
+        doc.texto(linea, 'centro')
+    doc.separador()
+    if metodo == 'anulacion':
+        doc.texto('ANULACION DE VENTA', 'centro', negrita=True, tamano='alto')
+        doc.texto(f"Venta original: {venta.get('anula_a', '')}", 'centro')
+    doc.texto(venta.get('timestamp', ''), 'centro')
+    doc.separador()
+
+    for it in venta.get('items') or []:
+        qty = _a_int(it.get('qty'), 1)
+        doc.fila(f"{qty}x {it.get('nombre', '')}", formato_euros(_precio_unitario(it) * qty))
+        for r in it.get('removals') or []:
+            doc.texto(r, sangria=3)
+        for e in it.get('extras') or []:
+            doc.texto(f"{e} +0,80 €", sangria=3)
+        if it.get('notes'):
+            doc.texto(f"Nota: {it['notes']}", sangria=3)
+
+    doc.separador()
+    doc.fila('TOTAL (IVA incl.)', formato_euros(total), negrita=True, tamano='alto')
+    base = total / (1 + IVA)
+    doc.fila('Base Imponible (10%):', formato_euros(base))
+    doc.fila('Cuota IVA:', formato_euros(total - base))
+    doc.separador()
+
+    if metodo == 'anulacion':
+        if abs(efectivo - cambio) >= 0.005:
+            doc.fila('Devuelto en efectivo', formato_euros(-(efectivo - cambio)), negrita=True)
+        if abs(tarjeta) >= 0.005:
+            doc.fila('Devuelto a tarjeta', formato_euros(-tarjeta), negrita=True)
+    elif metodo == 'efectivo':
+        doc.fila('Efectivo', formato_euros(efectivo))
+        doc.fila('Cambio', formato_euros(cambio))
+    elif metodo == 'tarjeta':
+        doc.fila('Tarjeta', formato_euros(tarjeta))
+    else:
+        doc.fila('Efectivo', formato_euros(efectivo))
+        doc.fila('Tarjeta', formato_euros(tarjeta))
+    doc.separador()
+    doc.texto('¡Gracias por su visita!', 'centro', negrita=True)
+    return doc.finalizar()
+
+
+def generar_comanda(comanda, config):
+    """Comanda para cocina: letra grande, agrupada por categoria y sin precios."""
+    doc = DocumentoESCPOS(config)
+    doc.texto('COMANDA COCINA', 'centro', negrita=True, tamano='grande')
+    doc.texto(datetime.now().strftime('%d/%m/%Y %H:%M'), 'centro')
+    doc.separador('=')
+    if comanda.get('pedido_id'):
+        doc.texto(f"PEDIDO #{comanda['pedido_id']}", 'centro', negrita=True, tamano='alto')
+    hora = str(comanda.get('hora_recogida') or '').strip()
+    if hora:
+        doc.texto(f"RECOGER: {hora}", 'centro', negrita=True, tamano='grande')
+
+    ultima_categoria = None
+    for it in comanda.get('items') or []:
+        categoria = str(it.get('categoria') or 'VARIOS').upper()
+        if categoria != ultima_categoria:
+            doc.salto()
+            doc.texto(f"---- {categoria} ----", 'centro', negrita=True)
+            ultima_categoria = categoria
+        doc.texto(f"{_a_int(it.get('qty'), 1)}x {it.get('nombre', '')}", negrita=True, tamano='alto')
+        for r in it.get('removals') or []:
+            doc.texto(f"- {r}", negrita=True, sangria=4)
+        for e in it.get('extras') or []:
+            doc.texto(f"+ {e}", negrita=True, sangria=4)
+        if it.get('notes'):
+            doc.texto(f"Nota: {it['notes']}", negrita=True, sangria=4)
+        doc.separador()
+    return doc.finalizar()
+
+
+def generar_ticket_cierre(cierre, movimientos, config):
+    """Justificante en papel del arqueo y cierre de caja."""
+    doc = DocumentoESCPOS(config)
+    doc.texto('CIERRE DE CAJA', 'centro', negrita=True, tamano='grande')
+    doc.texto(TICKET_NOMBRE, 'centro')
+    doc.texto(cierre.get('timestamp', ''), 'centro')
+    doc.separador()
+    doc.fila('Fondo inicial', formato_euros(cierre.get('fondo_inicial')))
+    doc.fila('+ Ventas en efectivo', formato_euros(cierre.get('ventas_efectivo')))
+    doc.fila('+ Entradas de caja', formato_euros(cierre.get('entradas')))
+    doc.fila('- Salidas de caja', formato_euros(cierre.get('salidas')))
+    doc.separador()
+    doc.fila('Teorico en caja', formato_euros(cierre.get('teorico_efectivo')), negrita=True)
+    doc.fila('Contado (real)', formato_euros(cierre.get('real_efectivo')), negrita=True)
+    doc.fila('DESCUADRE', formato_euros(cierre.get('descuadre')), negrita=True, tamano='alto')
+    doc.separador()
+    doc.fila('Pagos con tarjeta', formato_euros(cierre.get('ventas_tarjeta')))
+    doc.fila('TOTAL FACTURADO', formato_euros(cierre.get('total_facturado')), negrita=True)
+
+    desglose = cierre.get('desglose') or {}
+    lineas_desglose = [(etiqueta, _a_int(desglose.get(clave)), valor)
+                       for clave, etiqueta, valor in DESGLOSE_CAJA if _a_int(desglose.get(clave)) > 0]
+    if lineas_desglose:
+        doc.separador()
+        doc.texto('DESGLOSE DEL EFECTIVO', negrita=True)
+        for etiqueta, cantidad, valor in lineas_desglose:
+            doc.fila(f"{cantidad} x {etiqueta}", formato_euros(cantidad * valor))
+
+    if movimientos:
+        doc.separador()
+        doc.texto('ENTRADAS Y SALIDAS DE CAJA', negrita=True)
+        for m in movimientos:
+            hora = (m.get('timestamp') or '')[11:16]
+            signo = -1 if m.get('tipo') == 'salida' else 1
+            doc.fila(f"{hora} {m.get('concepto', '')}", formato_euros(signo * _a_float(m.get('importe'))))
+
+    doc.separador()
+    doc.salto(2)
+    doc.texto('Firma: ______________________')
+    doc.salto(1)
+    return doc.finalizar()
+
+
+def enviar_a_impresora(datos, nombre_trabajo, config=None):
+    """Envia bytes RAW a la impresora configurada.
+    Devuelve {'ok', 'configurada', 'error'}; nunca lanza excepciones."""
+    if config is None:
+        config = leer_config_impresora()
+    if win32print is None:
+        return {'ok': False, 'configurada': False, 'error': 'Falta instalar pywin32 en el servidor'}
+    nombre = str(config.get('impresora', '')).strip()
+    if not nombre:
+        return {'ok': False, 'configurada': False,
+                'error': 'Impresora no configurada en config_impresora.json'}
+
+    handle = None
+    try:
+        handle = win32print.OpenPrinter(nombre)
+        win32print.StartDocPrinter(handle, 1, (nombre_trabajo, None, 'RAW'))
+        try:
+            win32print.StartPagePrinter(handle)
+            win32print.WritePrinter(handle, datos)
+            win32print.EndPagePrinter(handle)
+        finally:
+            win32print.EndDocPrinter(handle)
+        return {'ok': True, 'configurada': True, 'error': ''}
+    except Exception as e:
+        logger.error(f"ERROR imprimiendo '{nombre_trabajo}' en '{nombre}': {e}")
+        return {'ok': False, 'configurada': True, 'error': f'No se pudo imprimir en "{nombre}"'}
+    finally:
+        if handle:
+            try:
+                win32print.ClosePrinter(handle)
+            except Exception:
+                pass
+
+
+def imprimir_venta(venta):
+    """Tras guardar una venta: abre el cajon si se ha movido efectivo
+    e imprime el ticket si esta activada la impresion automatica."""
+    try:
+        config = leer_config_impresora()
+        datos = b''
+        if abs(_a_float(venta.get('pagado_efectivo'))) >= 0.005:
+            datos += comando_cajon(config)
+        if config.get('imprimir_ticket_automatico'):
+            datos += generar_ticket_venta(venta, config)
+        if not datos:
+            return {'ok': True, 'configurada': True, 'error': ''}
+        return enviar_a_impresora(datos, 'Ticket', config)
+    except Exception as e:
+        logger.error(f"ERROR preparando ticket: {e}")
+        logger.error(traceback.format_exc())
+        return {'ok': False, 'configurada': True, 'error': 'Error preparando el ticket'}
+
+
+def imprimir_cierre(cierre):
+    try:
+        config = leer_config_impresora()
+        datos = generar_ticket_cierre(cierre, leer_movimientos_hoy(), config)
+        return enviar_a_impresora(datos, 'Cierre de caja', config)
+    except Exception as e:
+        logger.error(f"ERROR preparando ticket de cierre: {e}")
+        logger.error(traceback.format_exc())
+        return {'ok': False, 'configurada': True, 'error': 'Error preparando el ticket de cierre'}
+
+
+def estado_impresora():
+    """Estado de la impresora segun la cola de impresion de Windows."""
+    config = leer_config_impresora()
+    nombre = str(config.get('impresora', '')).strip()
+    if win32print is None:
+        return {'estado': 'error', 'mensaje': 'Falta instalar pywin32 en el servidor'}
+    if not nombre:
+        return {'estado': 'sin_configurar', 'mensaje': 'Impresora sin configurar (config_impresora.json)'}
+
+    handle = None
+    try:
+        handle = win32print.OpenPrinter(nombre)
+        info = win32print.GetPrinter(handle, 2)
+    except Exception:
+        return {'estado': 'error', 'mensaje': f'No se encuentra la impresora "{nombre}" en Windows'}
+    finally:
+        if handle:
+            try:
+                win32print.ClosePrinter(handle)
+            except Exception:
+                pass
+
+    if (info.get('Attributes') or 0) & PRINTER_ATTRIBUTE_WORK_OFFLINE:
+        return {'estado': 'error', 'mensaje': f'"{nombre}": en modo "usar sin conexion"'}
+    problemas = [texto for bit, texto in ESTADOS_IMPRESORA_ERROR if (info.get('Status') or 0) & bit]
+    if problemas:
+        return {'estado': 'error', 'mensaje': f'"{nombre}": ' + ', '.join(problemas)}
+    trabajos = info.get('cJobs') or 0
+    if trabajos >= 2:
+        return {'estado': 'aviso',
+                'mensaje': f'"{nombre}": {trabajos} trabajos esperando en la cola (¿apagada o desconectada?)'}
+    return {'estado': 'ok', 'mensaje': f'"{nombre}" lista'}
+
+
+def _respuesta_impresion(resultado):
+    return jsonify(resultado), (200 if resultado.get('ok') else 503)
+
+
+@app.route('/api/abrir-cajon', methods=['POST'])
+def api_abrir_cajon():
+    """Abre el cajon portamonedas."""
+    try:
+        config = leer_config_impresora()
+        return _respuesta_impresion(enviar_a_impresora(comando_cajon(config), 'Abrir cajon', config))
+    except Exception as e:
+        logger.error(f"ERROR en POST /api/abrir-cajon: {e}")
+        logger.error(traceback.format_exc())
+        return jsonify({'error': 'Error interno del servidor'}), 500
+
+
+@app.route('/api/imprimir/ticket', methods=['POST'])
+def api_imprimir_ticket():
+    """Imprime (o reimprime) el ticket de una venta."""
+    try:
+        data = request.json
+        if not data:
+            return jsonify({'error': 'No se recibieron datos'}), 400
+        config = leer_config_impresora()
+        return _respuesta_impresion(enviar_a_impresora(generar_ticket_venta(data, config), 'Ticket', config))
+    except Exception as e:
+        logger.error(f"ERROR en POST /api/imprimir/ticket: {e}")
+        logger.error(traceback.format_exc())
+        return jsonify({'error': 'Error interno del servidor'}), 500
+
+
+@app.route('/api/imprimir/comanda', methods=['POST'])
+def api_imprimir_comanda():
+    """Imprime la comanda de cocina del pedido actual."""
+    try:
+        data = request.json
+        if not data or not data.get('items'):
+            return jsonify({'error': 'La comanda no tiene productos'}), 400
+        config = leer_config_impresora()
+        return _respuesta_impresion(enviar_a_impresora(generar_comanda(data, config), 'Comanda', config))
+    except Exception as e:
+        logger.error(f"ERROR en POST /api/imprimir/comanda: {e}")
+        logger.error(traceback.format_exc())
+        return jsonify({'error': 'Error interno del servidor'}), 500
+
+
+@app.route('/api/impresora/estado', methods=['GET'])
+def api_estado_impresora():
+    try:
+        return jsonify(estado_impresora())
+    except Exception as e:
+        logger.error(f"ERROR en GET /api/impresora/estado: {e}")
+        return jsonify({'estado': 'error', 'mensaje': 'Error consultando la impresora'}), 500
 
 
 # =============================================================================
@@ -958,6 +1595,27 @@ def arranque_seguro():
         print('          Coloca el archivo index.html en esa carpeta')
 
     print(f'  [OK] Log de errores: {LOG_FILE}')
+
+    # Los CSV de versiones anteriores reciben las columnas nuevas (anulaciones, entradas/salidas)
+    asegurar_columnas_csv(CSV_VENTAS, VENTAS_FIELDNAMES)
+    asegurar_columnas_csv(CSV_CIERRES, CIERRES_FIELDNAMES)
+
+    config = leer_config_impresora()
+    if win32print is None:
+        print('  [AVISO] pywin32 no instalado - el cajon no se abrira')
+        print('          Ejecuta: pip install pywin32')
+    elif not str(config.get('impresora', '')).strip():
+        print(f'  [AVISO] Impresora del cajon sin configurar en {CONFIG_IMPRESORA}')
+        print('          Impresoras instaladas en este PC:')
+        try:
+            for p in win32print.EnumPrinters(win32print.PRINTER_ENUM_LOCAL | win32print.PRINTER_ENUM_CONNECTIONS):
+                print(f'            - {p[2]}')
+        except Exception:
+            pass
+    else:
+        estado = estado_impresora()
+        etiqueta = {'ok': '[OK]', 'aviso': '[AVISO]'}.get(estado['estado'], '[ERROR]')
+        print(f"  {etiqueta} Impresora de tickets: {estado['mensaje']}")
     print('')
     
 def leer_ventas_rango(desde, hasta):
