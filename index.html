@@ -5,223 +5,214 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Pollería Las Portadas</title>
     <meta name="description" content="Pollos asados, fritos, bocatas, hamburguesas, sándwiches, fritos y mucho más. Consulta nuestra carta online.">
+    <meta name="theme-color" content="#C8102E">
+    <link rel="icon" type="image/png" href="carta/logo-polleria.png">
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-RHN89GTXF9"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-    
+
       gtag('config', 'G-RHN89GTXF9');
     </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Inter:wght@400;600;700&display=swap">
     <link rel="stylesheet" href="web.css">
 </head>
 <body>
-    <div class="site">
-        <header class="header">
-            <div class="container header__inner">
-                <a href="/" class="brand" aria-label="Ir al inicio de Pollería Las Portadas">
-                    <img src="carta/logo-polleria.png" alt="Logo de Pollería Las Portadas" class="brand__logo">
-                    <div class="brand__text">
-                        <span class="brand__name">Pollería Las Portadas</span>
-                        <span class="brand__tag">Comida para llevar</span>
-                    </div>
-                </a>
+    <a href="#contenido" class="skip-link">Saltar al contenido</a>
 
-                <nav class="nav" aria-label="Navegación principal">
-                    <a href="#destacados" class="nav__link">Destacados</a>
-                    <a href="carta/index.html" class="nav__link nav__link--button">Ver carta</a>
-                    <a href="tel:+34 623 700 918" class="nav__link nav__link--phone">Llamar</a>
-                </nav>
-            </div>
-        </header>
-
-        <main>
-            <section class="hero">
-                <div class="container hero__inner">
-                    <div class="hero__content">
-                        <p class="hero__eyebrow">Pollos asados, fritos y comida casera para llevar</p>
-
-                        <h1 class="hero__title">
-                            Sabor casero, pollos irresistibles y una carta pensada para disfrutar
-                        </h1>
-
-                        <p class="hero__text">
-                            Pollos, bocatas, hamburguesas, perritos, sándwiches, fritos, patatas, aliños,
-                            bebidas y menú del día. Haz tu pedido y recógelo en local.
-                        </p>
-
-                        <div class="hero__actions">
-                            <a href="carta/index.html" class="button button--primary">Ver carta completa</a>
-                            <a href="tel:+34623700918" class="button button--secondary">Llamar ahora</a>
-                        </div>
-
-                        <ul class="hero__features">
-                            <li>Recogida en local</li>
-                            <li>Pedido por teléfono</li>
-                            <li>Carta disponible online</li>
-                        </ul>
-                    </div>
-
-                    <div class="hero__visual">
-                        <div class="hero__image-wrap">
-                            <img src="carta/logo-polleria.png" alt="Mascota de Pollería Las Portadas" class="hero__image">
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section class="highlights" id="destacados">
-                <div class="container">
-                    <div class="section-heading">
-                        <p class="section-heading__eyebrow">Lo más importante de la casa</p>
-                        <h2 class="section-heading__title">Nuestros destacados</h2>
-                    </div>
-
-                    <div class="highlights__grid">
-                        <article class="highlight-card highlight-card--pollos">
-                            <h3 class="highlight-card__title">Pollos</h3>
-                            <p class="highlight-card__text">
-                                Pollo asado, pollo frito, medio pollo y pollo con patatas.
-                            </p>
-                            <a href="carta/index.html" class="highlight-card__link">Ver carta</a>
-                        </article>
-
-                        <article class="highlight-card highlight-card--especiales">
-                            <h3 class="highlight-card__title">Especiales</h3>
-                            <p class="highlight-card__text">
-                                Bocatas especiales con más cantidad y sabor para compartir o darte un homenaje.
-                            </p>
-                            <a href="carta/index.html" class="highlight-card__link">Ver especiales</a>
-                        </article>
-
-                        <article class="highlight-card highlight-card--fritos">
-                            <h3 class="highlight-card__title">Fritos</h3>
-                            <p class="highlight-card__text">
-                                Lagrimitas, flamenquín, nuggets, pavías, capirotes y croquetas caseras.
-                            </p>
-                            <a href="carta/index.html" class="highlight-card__link">Ver fritos</a>
-                        </article>
-
-                        <article class="highlight-card highlight-card--menu">
-                            <h3 class="highlight-card__title">Menú del día</h3>
-                            <p class="highlight-card__text">
-                                Consulta disponibilidad diaria y pregunte por alérgenos.
-                            </p>
-                            <a href="carta/index.html" class="highlight-card__link">Consultar carta</a>
-                        </article>
-                    </div>
-                </div>
-            </section>
-
-            <section class="cta-carta">
-                <div class="container">
-                    <div class="cta-carta__box">
-                        <p class="cta-carta__eyebrow">Carta online</p>
-                        <h2 class="cta-carta__title">Consulta aquí nuestra carta completa</h2>
-                        <p class="cta-carta__text">
-                            Accede a todos los productos, precios y alérgenos desde tu móvil.
-                        </p>
-                        <a href="carta/index.html" class="button button--primary">Abrir carta</a>
-                    </div>
-                </div>
-            </section>
-
-            <section class="info">
-                <div class="container">
-                    <div class="info-top">
-                        <article class="info-card">
-                            <h3 class="info-card__title">Pedidos</h3>
-                            <p class="info-card__text">
-                                Haz tu pedido por teléfono y recógelo cómodamente en local.
-                            </p>
-                            <a href="tel:+34623700918" class="info-card__link">+34 623 700 918</a>
-                        </article>
-
-                        <article class="info-card">
-                            <h3 class="info-card__title">Dirección</h3>
-                            <p class="info-card__text">
-                                Avenida las Portadas 2, local, Dos Hermanas, Sevilla
-                            </p>
-                            <a
-                                href="https://maps.app.goo.gl/CwfVTnTK6tAssZpx7"
-                                class="info-card__link"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                Cómo llegar
-                            </a>
-                        </article>
-
-                        <article class="info-card">
-                            <h3 class="info-card__title">Facebook</h3>
-                            <p class="info-card__text">
-                                Síguenos para novedades, menú del día y actualizaciones.
-                            </p>
-                            <a
-                                href="https://www.facebook.com/61581440820472/?locale=es_ES"
-                                class="info-card__link"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                Polleria las Portadas
-                            </a>
-                        </article>
-                    </div>
-
-                    <div class="info-hours__grid">
-                        <div class="info-hours__item">
-                            <span class="info-hours__day">Lunes</span>
-                            <span class="info-hours__time is-closed">Cerrado</span>
-                        </div>
-                    
-                        <div class="info-hours__item">
-                            <span class="info-hours__day">Martes</span>
-                            <span class="info-hours__time is-closed">Cerrado</span>
-                        </div>
-                    
-                        <div class="info-hours__item">
-                            <span class="info-hours__day">Miércoles</span>
-                            <span class="info-hours__time">12:30–16:00 · 20:00–23:00</span>
-                        </div>
-                    
-                        <div class="info-hours__item">
-                            <span class="info-hours__day">Jueves</span>
-                            <span class="info-hours__time">12:30–16:00 · 20:00–23:00</span>
-                        </div>
-                    
-                        <div class="info-hours__item">
-                            <span class="info-hours__day">Viernes</span>
-                            <span class="info-hours__time">12:30–16:00 · 20:00–23:00</span>
-                        </div>
-                    
-                        <div class="info-hours__item">
-                            <span class="info-hours__day">Sábado</span>
-                            <span class="info-hours__time">12:30–16:00 · 20:00–23:00</span>
-                        </div>
-                    
-                        <div class="info-hours__item">
-                            <span class="info-hours__day">Domingo</span>
-                            <span class="info-hours__time">12:30–16:00</span>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-        </main>
-
-        <footer class="footer">
-            <div class="container footer__inner">
-                <div class="footer__brand">
-                    <strong>Pollería Las Portadas</strong>
-                    <span>Comida para llevar · Recogida en local</span>
-                </div>
-
-                <div class="footer__contact">
-                    <span>Tel. +34 623 700 918</span>
-                    <span>Avenida las Portadas 2, local, Dos Hermanas, Sevilla</span>
-                </div>
-            </div>
-        </footer>
+    <div class="topbar">
+        Pide por teléfono y recoge en local · <a href="tel:+34623700918">623 700 918</a>
     </div>
+
+    <header class="header">
+        <div class="container header__inner">
+            <a href="./" class="brand" aria-label="Ir al inicio de Pollería Las Portadas">
+                <img src="carta/logo-polleria.png" alt="" class="brand__logo" width="52" height="52">
+                <span class="brand__text">
+                    <span class="brand__name">Las Portadas</span>
+                    <span class="brand__tag">Pollería · Dos Hermanas</span>
+                </span>
+            </a>
+
+            <nav class="nav" aria-label="Navegación principal">
+                <a href="carta/index.html" class="nav__link">Carta</a>
+                <a href="#destacados" class="nav__link">Destacados</a>
+                <a href="#horario" class="nav__link">Horario</a>
+            </nav>
+
+            <a href="tel:+34623700918" class="button button--call">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>
+                Llamar
+            </a>
+        </div>
+    </header>
+
+    <main id="contenido">
+        <section class="hero">
+            <div class="container hero__inner">
+                <div class="hero__content">
+                    <p class="hero__eyebrow">Asados · Fritos · Para llevar</p>
+                    <h1 class="hero__title">El pollo de<br>Las Portadas</h1>
+                    <p class="hero__text">
+                        Pollos asados y fritos, bocatas, hamburguesas y fritos caseros.
+                        Llámanos, haz tu pedido y pásate a recogerlo.
+                    </p>
+                    <div class="hero__actions">
+                        <a href="carta/index.html" class="button button--light">Ver la carta</a>
+                        <a href="tel:+34623700918" class="button button--outline">Pedir: 623 700 918</a>
+                    </div>
+                </div>
+
+                <div class="hero__visual">
+                    <div class="hero__badge">
+                        <img src="carta/logo-polleria.png" alt="Mascota de Pollería Las Portadas: un gallo con un pollo asado" width="300" height="300">
+                    </div>
+                </div>
+            </div>
+            <div class="stripes" aria-hidden="true"></div>
+        </section>
+
+        <section class="section" id="destacados">
+            <div class="container">
+                <div class="section__head">
+                    <h2 class="section__title">Los favoritos</h2>
+                    <a href="carta/index.html" class="section__link">Ver toda la carta</a>
+                </div>
+
+                <div class="products">
+                    <article class="product">
+                        <div class="product__stripes" aria-hidden="true"></div>
+                        <div class="product__body">
+                            <p class="product__category">Pollos</p>
+                            <h3 class="product__name">Medio pollo asado</h3>
+                            <p class="product__text">La ración justa para uno.</p>
+                            <p class="product__price">6,50 €</p>
+                        </div>
+                    </article>
+
+                    <article class="product">
+                        <div class="product__stripes" aria-hidden="true"></div>
+                        <div class="product__body">
+                            <p class="product__category">Pollos</p>
+                            <h3 class="product__name">Pollo asado</h3>
+                            <p class="product__text">Entero, para compartir en casa.</p>
+                            <p class="product__price">11,00 €</p>
+                        </div>
+                    </article>
+
+                    <article class="product">
+                        <div class="product__stripes" aria-hidden="true"></div>
+                        <div class="product__body">
+                            <p class="product__category">Pollos</p>
+                            <h3 class="product__name">Pollo frito</h3>
+                            <p class="product__text">Entero y bien crujiente.</p>
+                            <p class="product__price">11,00 €</p>
+                        </div>
+                    </article>
+
+                    <article class="product product--featured">
+                        <div class="product__stripes" aria-hidden="true"></div>
+                        <div class="product__body">
+                            <p class="product__category">Pollos</p>
+                            <h3 class="product__name">Pollo con patatas</h3>
+                            <p class="product__text">El pollo entero con su ración de patatas.</p>
+                            <p class="product__price">14,00 €</p>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="section section--tight">
+            <div class="container">
+                <h2 class="section__title section__title--small">Todo lo que hay en la carta</h2>
+                <ul class="categories">
+                    <li><a href="carta/index.html">Pollos</a></li>
+                    <li><a href="carta/index.html">Bocatas</a></li>
+                    <li><a href="carta/index.html">Hamburguesas</a></li>
+                    <li><a href="carta/index.html">Perritos</a></li>
+                    <li><a href="carta/index.html">Sándwiches</a></li>
+                    <li><a href="carta/index.html">Fritos</a></li>
+                    <li><a href="carta/index.html">Patatas</a></li>
+                    <li><a href="carta/index.html">Aliños</a></li>
+                    <li><a href="carta/index.html">Salsas</a></li>
+                    <li><a href="carta/index.html">Bebidas</a></li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="steps">
+            <div class="container">
+                <h2 class="section__title section__title--center">Pedir es así de fácil</h2>
+                <ol class="steps__list">
+                    <li class="step">
+                        <span class="step__number" aria-hidden="true">1</span>
+                        <h3 class="step__title">Mira la carta</h3>
+                        <p class="step__text">Precios y alérgenos, desde el móvil.</p>
+                    </li>
+                    <li class="step">
+                        <span class="step__number" aria-hidden="true">2</span>
+                        <h3 class="step__title">Llama al <a href="tel:+34623700918">623 700 918</a></h3>
+                        <p class="step__text">Dinos qué quieres y a qué hora pasas a por ello.</p>
+                    </li>
+                    <li class="step">
+                        <span class="step__number" aria-hidden="true">3</span>
+                        <h3 class="step__title">Recoge en el local</h3>
+                        <p class="step__text">Avenida las Portadas 2, Dos Hermanas.</p>
+                    </li>
+                </ol>
+            </div>
+        </section>
+
+        <section class="section" id="horario">
+            <div class="container visit">
+                <div class="visit__hours">
+                    <h2 class="section__title">Horario</h2>
+                    <dl class="hours">
+                        <div class="hours__row">
+                            <dt>Lunes</dt>
+                            <dd class="is-closed">Cerrado</dd>
+                        </div>
+                        <div class="hours__row">
+                            <dt>Martes</dt>
+                            <dd class="is-closed">Cerrado</dd>
+                        </div>
+                        <div class="hours__row">
+                            <dt>Miércoles a sábado</dt>
+                            <dd>12:30–16:00 · 20:00–23:00</dd>
+                        </div>
+                        <div class="hours__row">
+                            <dt>Domingo</dt>
+                            <dd>12:30–16:00</dd>
+                        </div>
+                    </dl>
+                    <p class="visit__note">¿Menú del día o dudas con alérgenos? Pregúntanos por teléfono.</p>
+                </div>
+
+                <div class="visit__place">
+                    <h2 class="visit__title">Dónde estamos</h2>
+                    <p class="visit__address">
+                        <svg class="icon icon--big" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <span>Avenida las Portadas 2, local<br>41700 Dos Hermanas, Sevilla</span>
+                    </p>
+                    <div class="visit__actions">
+                        <a href="https://maps.app.goo.gl/CwfVTnTK6tAssZpx7" class="button button--red" target="_blank" rel="noopener noreferrer">Cómo llegar</a>
+                        <a href="https://www.facebook.com/61581440820472/?locale=es_ES" class="button button--outline" target="_blank" rel="noopener noreferrer">Facebook</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="stripes stripes--thin" aria-hidden="true"></div>
+        <div class="container footer__inner">
+            <strong class="footer__brand">Pollería Las Portadas</strong>
+            <span>Tel. <a href="tel:+34623700918">623 700 918</a> · Avenida las Portadas 2, Dos Hermanas</span>
+        </div>
+    </footer>
 </body>
 </html>
