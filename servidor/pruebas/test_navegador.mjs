@@ -56,6 +56,7 @@ let ws, siguienteId = 0;
 const pendientes = new Map();
 const erroresJS = [];
 const dialogos = [];
+const peticiones = [];
 
 function cdp(method, params = {}) {
   const id = ++siguienteId;
@@ -79,6 +80,8 @@ async function conectar() {
       erroresJS.push(d.exception?.description || d.text);
     } else if (m.method === 'Runtime.consoleAPICalled' && m.params.type === 'error') {
       erroresJS.push('console.error: ' + m.params.args.map(a => a.value ?? a.description).join(' '));
+    } else if (m.method === 'Network.requestWillBeSent') {
+      peticiones.push(m.params.request.url);
     } else if (m.method === 'Page.javascriptDialogOpening') {
       dialogos.push(m.params.message);
       cdp('Page.handleJavaScriptDialog', { accept: true });
@@ -86,6 +89,7 @@ async function conectar() {
   };
   await cdp('Runtime.enable');
   await cdp('Page.enable');
+  await cdp('Network.enable');
 }
 
 async function js(expresion) {
@@ -160,6 +164,17 @@ async function main() {
   await prueba('La página carga sin errores y el indicador de impresora está en verde', async () => {
     await esperar(async () => (await js(`document.getElementById('printer-status').className`)) === 'printer-status ok', 'indicador verde');
     comprobar((await js(`document.getElementById('printer-status').title`)).includes('TM-T20'), 'el indicador no muestra el nombre');
+  });
+
+  await prueba('Funciona sin internet: no pide nada fuera del TPV y las fuentes están cargadas', async () => {
+    await js(`document.fonts.ready.then(() => true)`);
+    const externas = peticiones.filter(u => !u.startsWith(BASE) && !u.startsWith('data:'));
+    comprobar(externas.length === 0, 'pide recursos de internet: ' + externas.join(', '));
+    const fuentes = await js(`[...document.fonts].map(f => f.family.replace(/["']/g, '') + ':' + f.status)`);
+    for (const familia of ['Oswald', 'Inter'])
+      comprobar(fuentes.includes(familia + ':loaded'), `la fuente ${familia} no está cargada (${fuentes.join(', ')})`);
+    const usadas = await js(`[getComputedStyle(document.querySelector('#order-header h2')).fontFamily, getComputedStyle(document.body).fontFamily]`);
+    comprobar(usadas[0].startsWith('Oswald') && usadas[1].startsWith('Inter'), 'fuentes aplicadas: ' + usadas.join(' / '));
   });
 
   await prueba('Cobro en efectivo con botón rápido de 20 €: guarda, abre el cajón e imprime el ticket', async () => {
